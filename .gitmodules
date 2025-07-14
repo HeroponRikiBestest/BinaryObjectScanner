@@ -18,7 +18,7 @@
 	url = https://github.com/SabreTools/SabreTools.Hashing
 [submodule "SabreTools.IO"]
 	path = SabreTools.IO
-	url = https://github.com/SabreTools/SabreTools.IO
+	url = https://github.com/SabreTools/SabreTools.IO.git
 [submodule "SabreTools.Matching"]
 	path = SabreTools.Matching
 	url = https://github.com/SabreTools/SabreTools.Matching
@@ -27,7 +27,7 @@
 	url = https://github.com/SabreTools/SabreTools.Models
 [submodule "SabreTools.Serialization"]
 	path = SabreTools.Serialization
-	url = https://github.com/SabreTools/SabreTools.Serialization
+	url = https://github.com/SabreTools/SabreTools.Serialization.git
 [submodule "UnshieldSharp"]
 	path = UnshieldSharp
 	url = https://github.com/mnadareski/UnshieldSharp
