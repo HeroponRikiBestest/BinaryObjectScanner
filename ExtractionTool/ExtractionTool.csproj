@@ -71,8 +71,8 @@
 
     <ItemGroup>
         <ProjectReference Include="..\BinaryObjectScanner\BinaryObjectScanner.csproj" />
-        <ProjectReference Include="..\SabreTools.IO\SabreTools.IO.sln" />
-        <ProjectReference Include="..\SabreTools.Serialization\SabreTools.Serialization.sln" />
+        <ProjectReference Include="..\SabreTools.IO\SabreTools.IO\SabreTools.IO.csproj" />
+        <ProjectReference Include="..\SabreTools.Serialization\SabreTools.Serialization\SabreTools.Serialization.csproj" />
     </ItemGroup>
 
 </Project>
