@@ -70,8 +70,9 @@
     </ItemGroup>
 
     <ItemGroup>
-        <PackageReference Include="SabreTools.IO" Version="1.6.3" />
-        <PackageReference Include="SabreTools.Serialization" Version="1.8.6" />
+        <ProjectReference Include="..\BinaryObjectScanner\BinaryObjectScanner.csproj" />
+        <ProjectReference Include="..\SabreTools.IO\SabreTools.IO.sln" />
+        <ProjectReference Include="..\SabreTools.Serialization\SabreTools.Serialization.sln" />
     </ItemGroup>
 
 </Project>

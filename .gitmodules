@@ -7,3 +7,30 @@
 [submodule "BinaryObjectScanner/_EXTERNAL/LessIO"]
 	path = BinaryObjectScanner/_EXTERNAL/LessIO
 	url = https://github.com/activescott/LessIO.git
+[submodule "SabreTools.Compression"]
+	path = SabreTools.Compression
+	url = https://github.com/SabreTools/SabreTools.Compression
+[submodule "SharpCompress"]
+	path = SharpCompress
+	url = https://github.com/adamhathcock/sharpcompress
+[submodule "SabreTools.Hashing"]
+	path = SabreTools.Hashing
+	url = https://github.com/SabreTools/SabreTools.Hashing
+[submodule "SabreTools.IO"]
+	path = SabreTools.IO
+	url = https://github.com/SabreTools/SabreTools.IO
+[submodule "SabreTools.Matching"]
+	path = SabreTools.Matching
+	url = https://github.com/SabreTools/SabreTools.Matching
+[submodule "SabreTools.Models"]
+	path = SabreTools.Models
+	url = https://github.com/SabreTools/SabreTools.Models
+[submodule "SabreTools.Serialization"]
+	path = SabreTools.Serialization
+	url = https://github.com/SabreTools/SabreTools.Serialization
+[submodule "UnshieldSharp"]
+	path = UnshieldSharp
+	url = https://github.com/mnadareski/UnshieldSharp
+[submodule "WiseUnpacker"]
+	path = WiseUnpacker
+	url = https://github.com/mnadareski/WiseUnpacker
