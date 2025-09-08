@@ -297,7 +297,9 @@ namespace BinaryObjectScanner.Protection
                 return $"SecuROM Product Activation v{exe.GetInternalVersion()}";
 
             // Custom Module Checks
-            
+            // Electronic Arts's custom PA module, EA Game Authorization Management.
+            // TODO: Name might possibly just be "EA Game Authorization"; Management could just refer to downloadable
+            // tools for managing it.
             if (exe.ProductName.OptionalEquals("drEAm")) 
                 return $"SecuROM Product Activation v{exe.GetInternalVersion()} - EA Game Authorization Management";
             
