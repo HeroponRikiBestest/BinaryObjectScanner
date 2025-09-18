@@ -21,13 +21,14 @@ namespace BinaryObjectScanner.Protection
             if (paModule != null)
                 return paModule;
 
-            // Get the matrosch section, if it exists
-            if (exe.ContainsSection("matrosch", exact: true))
-                return $"SecuROM Matroschka Package";
+            // Check if executable contains a SecuROM Matroschka Package
 
-            // Get the rcpacker section, if it exists
-            if (exe.ContainsSection("rcpacker", exact: true))
-                return $"SecuROM Release Control";
+            if (exe.MatroschkaPackage != null)
+            {
+                var matroschka = CheckMatroschkaPackage(exe, includeDebug);
+                if (matroschka != null)
+                    return matroschka;
+            }
 
             if (exe.ContainsSection(".dsstext", exact: true))
                 return $"SecuROM 8.03.03+";
@@ -340,6 +341,40 @@ namespace BinaryObjectScanner.Protection
                 return $"SecuROM Product Activation - Modified";
 
             return null;
+        }
+        
+        /// <summary>
+        /// Helper method to run checks on a SecuROM Matroschka Package
+        /// </summary>
+        private static string? CheckMatroschkaPackage(PortableExecutable exe, bool includeDebug)
+        {
+            var matroschka = exe.MatroschkaPackage;
+            var fileData = exe.MatroschkaPackageFileData;
+
+            if (matroschka.KeyHexString == null || matroschka.KeyHexString == "\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0")
+            {
+                return null;
+            }
+//   System.Text.Encoding.ASCII.GetString(matroschka.Entries[1].Path)
+
+            if (includeDebug)
+            {
+                var entry = matroschka.Entries[1];
+#if NET5_0_OR_GREATER
+            string expectedMD5 = Convert.ToHexString(entry.MD5).ToUpper(); // TODO: is ToUpper right?
+#else
+                string expectedMD5 = BitConverter.ToString(entry.MD5).Replace("-",""); // TODO: endianness?
+#endif
+                Console.WriteLine($"~{exe.Filename}," +
+                                  $"{expectedMD5}," +
+                                  $"{entry.Size}," +
+                                  $"{entry.ModifiedTime}," +
+                                  $"{entry.AccessedTime}," +
+                                  $"{entry.CreatedTime},");
+            }
+            
+            return $"SecuROM Matroschka Package";
+            
         }
     }
 }
