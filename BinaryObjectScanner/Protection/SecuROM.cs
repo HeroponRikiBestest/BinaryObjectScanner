@@ -357,7 +357,7 @@ namespace BinaryObjectScanner.Protection
             }
 //   System.Text.Encoding.ASCII.GetString(matroschka.Entries[1].Path)
 
-            if (includeDebug)
+            /*if (includeDebug)
             {
                 var entry = matroschka.Entries[1];
 #if NET5_0_OR_GREATER
@@ -371,7 +371,7 @@ namespace BinaryObjectScanner.Protection
                                   $"{entry.ModifiedTime}," +
                                   $"{entry.AccessedTime}," +
                                   $"{entry.CreatedTime},");
-            }
+            }*/
             
             return $"SecuROM Matroschka Package";
             
