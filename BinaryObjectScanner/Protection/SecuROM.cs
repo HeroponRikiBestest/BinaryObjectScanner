@@ -349,15 +349,24 @@ namespace BinaryObjectScanner.Protection
         private static string? CheckMatroschkaPackage(PortableExecutable exe, bool includeDebug)
         {
             var matroschka = exe.MatroschkaPackage;
+            if (matroschka == null)
+                return null;
+            
             var fileData = exe.MatroschkaPackageFileData; // Not currently used, but will eventually be
 
             // Check for all 0x00 required, as at least one known non-RC matroschka has the field, just empty. 
             if (matroschka.KeyHexString == null || matroschka.KeyHexString == "\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0")
-            {
                 return "SecuROM Matroschka Package";
-            }
-            // TODO: all the null checks for safety
+
+            // TODO: I know this reads like debug output, but this should never happen, so I think I'd always want it there?
+            if (matroschka.Entries == null)
+                return "SecuROM Matroschka Package - No Entries? Please report"; 
+                
             var entry = matroschka.Entries[1];
+            
+            // TODO: I know this reads like debug output, but this should never happen, so I think I'd always want it there?
+            if (entry.MD5 == null)
+                return "SecuROM Matroschka Package - No MD5? Please report"; 
 
 #if NET5_0_OR_GREATER
             string MD5string = Convert.ToHexString(entry.MD5).ToUpper(); // TODO: is ToUpper right?
