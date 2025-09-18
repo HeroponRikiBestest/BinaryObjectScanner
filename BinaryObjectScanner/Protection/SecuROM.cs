@@ -349,36 +349,50 @@ namespace BinaryObjectScanner.Protection
         private static string? CheckMatroschkaPackage(PortableExecutable exe, bool includeDebug)
         {
             var matroschka = exe.MatroschkaPackage;
-            var fileData = exe.MatroschkaPackageFileData;
+            var fileData = exe.MatroschkaPackageFileData; // Not currently used, but will eventually be
 
+            // Check for all 0x00 required, as at least one known non-RC matroschka has the field, just empty. 
             if (matroschka.KeyHexString == null || matroschka.KeyHexString == "\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0")
             {
-                return null;
+                return "SecuROM Matroschka Package";
             }
-//   System.Text.Encoding.ASCII.GetString(matroschka.Entries[1].Path)
+            // TODO: all the null checks for safety
+            var entry = matroschka.Entries[1];
 
-            if (includeDebug)
-            {
-                var entry = matroschka.Entries[1];
 #if NET5_0_OR_GREATER
-            string expectedMD5 = Convert.ToHexString(entry.MD5).ToUpper(); // TODO: is ToUpper right?
+            string MD5string = Convert.ToHexString(entry.MD5).ToUpper(); // TODO: is ToUpper right?
 #else
-                string expectedMD5 = BitConverter.ToString(entry.MD5).Replace("-","").ToUpper(); // TODO: endianness?
+            string MD5string = BitConverter.ToString(entry.MD5).Replace("-","").ToUpper(); // TODO: endianness?
 #endif
-                /*Console.WriteLine($"~{exe.Filename}," +
-                                  $"{expectedMD5}," +
-                                  $"{entry.Size}," +
-                                  $"{entry.ModifiedTime}," +
-                                  $"{entry.AccessedTime}," +
-                                  $"{entry.CreatedTime},");*/
-                Console.WriteLine($"~{{\"{System.Text.Encoding.ASCII.GetString(matroschka.Entries[1].Path)}\", " +
-                                  $"{entry.Size}}},");
+            
+            // Check if encrypted executable is known via hash
+            string gameName;
+            if (MatroschkaHashDictionary.TryGetValue(MD5string, out gameName))
+            {
+                // Returning "SecuROM Matroschka Package" technically redundant since implied.
+                // Since non-debug is more common, return first
+                if (!includeDebug)
+                    return "SecuROM Release Control"; 
+                
+                // TODO: I'd like to have this debug output be the normal output, but I assume I'm not allowed to do that
+                return $"SecuROM Release Control -  {gameName}";
             }
             
-            return $"SecuROM Matroschka Package";
-            
+            // If not known, check if encrypted executable is likely an alt signing of a known executable
+            // Filetime could be checked here, but if it was signed at a different time, the time will vary anyways
+            byte[]? readPathBytes = entry.Path;
+            if (readPathBytes == null)
+                readPathBytes = [];
+
+            string? pathName;
+            if (MatroschkaSizeFilenameDictionary.TryGetValue(entry.Size, out pathName) && pathName == Encoding.ASCII.GetString(readPathBytes))
+                return $"SecuROM Release Control - Unknown possible alt executable of size {entry.Size}, please report to us on Github!";
+
+            string? readPathName = Encoding.ASCII.GetString(readPathBytes);
+            return $"SecuROM Release Control - Unknown executable {exe.Filename},{readPathName},{MD5string},{entry.Size}, PLEASE REPORT ON GITHUB IMMEDIATELY!!!";
         }
         
+        // Matches hash of the Release Control-encrypted executable to known hashes
         public static readonly Dictionary<string, string> MatroschkaHashDictionary = new Dictionary<string, string>()
         { // Allegedly, some version of Runaway: A Twist of Fate has RC
             {"C6DFF6B08EE126893840E107FD4EC9F6", "Alice - Madness Returns (USA)+(Europe)"},
@@ -394,7 +408,7 @@ namespace BinaryObjectScanner.Protection
             {"E5D63D369023A1D1074E7B13952FA0F2", "BioShock 2 (Russia) - Multiplayer executable"},
             {"C39F3BCB74EA8E1215D39AC308F64229", "BioShock 2 (Russia) - Singleplayer executable"},
             {"3C340B2D4DA25039C136FEE1DC2DDE17", "Borderlands (USA)+(Europe) (En,Fr,De,Es,It)"},
-            {"D35122E0E3F7B35C98BEFD706C260F83", "Crysis Warhead (Europe)+(Russia)+(USA)+(USA) (Alt)+"},
+            {"D35122E0E3F7B35C98BEFD706C260F83", "Crysis Warhead (Europe)+(Russia)+(USA)+(USA) (Alt)"},
             {"D9254D3353AB229806A806FCFCEABDBD", "Crysis Warhead (Japan)"},
             {"D69798C9198A6DB6A265833B350AC544", "Crysis Warhead (Turkey)"},
             {"9F574D56F1A4D7847C6A258DC2AF61A5", "Crysis Wars (Europe)+(Japan)+(Russia)+(Turkey)+(USA)+(USA) (Rerelease)"},
@@ -417,13 +431,14 @@ namespace BinaryObjectScanner.Protection
             {"935103B1600F1C743AF892A0DD761913", "Mass Effect 2 (GFWM)"},
             {"EEB2AE163AEEF6BE54C5A9BDD38C600E", "Mass Effect 3 (Europe, Australia)+(USA)"},
             {"2D08B73217B722A4F9E01523F07E118E", "Mass Effect 3 (UK)"},
-            {"4EA3CE0670DECD0A74FA312714C22025", "Need for Speed - The Run (Europe) (En,Fr,De,Nl) (Disc 1)"},
-            {"88AB0D4A4EE7867F740AD063400FCDB5", "Need for Speed - The Run (Russia) (Pl,Ru,Cs) (Disc 1)"},
-            {"EAD8E224D0F44706BA92BD9B27FEBA7D", "Need for Speed - The Run (USA) (En,Fr,Es) (Disc 1)"},
+            {"4EA3CE0670DECD0A74FA312714C22025", "Need for Speed - The Run (Europe)"},
+            {"88AB0D4A4EE7867F740AD063400FCDB5", "Need for Speed - The Run (Russia)"},
+            {"EAD8E224D0F44706BA92BD9B27FEBA7D", "Need for Speed - The Run (USA)"},
             {"316FF217BD129F9EEBD05A321A8FBE60", "Syndicate (USA)+(Europe) (En,Fr,De,Es,It,Ru)"},
         };
         
-        public static readonly Dictionary<uint, string> MatroschkaFilenameDictionary = new Dictionary<uint, string>()
+        // If hash isn't currently known, check size and pathname of the encrypted executable to determine if alt or entirely missing
+        public static readonly Dictionary<uint, string> MatroschkaSizeFilenameDictionary = new Dictionary<uint, string>()
         {
             {4646091, "hp8.aec"},
             {5124592, "output\\LaunchGTAIV.aec"},
