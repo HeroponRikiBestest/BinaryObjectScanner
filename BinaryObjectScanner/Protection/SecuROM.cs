@@ -357,140 +357,24 @@ namespace BinaryObjectScanner.Protection
             }
 //   System.Text.Encoding.ASCII.GetString(matroschka.Entries[1].Path)
 
-            if (includeDebug)
+            /*if (includeDebug)
             {
                 var entry = matroschka.Entries[1];
 #if NET5_0_OR_GREATER
             string expectedMD5 = Convert.ToHexString(entry.MD5).ToUpper(); // TODO: is ToUpper right?
 #else
-                string expectedMD5 = BitConverter.ToString(entry.MD5).Replace("-","").ToUpper(); // TODO: endianness?
+                string expectedMD5 = BitConverter.ToString(entry.MD5).Replace("-",""); // TODO: endianness?
 #endif
-                /*Console.WriteLine($"~{exe.Filename}," +
+                Console.WriteLine($"~{exe.Filename}," +
                                   $"{expectedMD5}," +
                                   $"{entry.Size}," +
                                   $"{entry.ModifiedTime}," +
                                   $"{entry.AccessedTime}," +
-                                  $"{entry.CreatedTime},");*/
-                Console.WriteLine($"~{{\"{System.Text.Encoding.ASCII.GetString(matroschka.Entries[1].Path)}\", " +
-                                  $"{entry.Size}}},");
-            }
+                                  $"{entry.CreatedTime},");
+            }*/
             
             return $"SecuROM Matroschka Package";
             
         }
-        
-        public static readonly Dictionary<string, string> MatroschkaHashDictionary = new Dictionary<string, string>()
-        {
-{"81B3415AF21C8691A1CD55A422BA64D5", "Disney TRON - Evolution (Europe) (En,Fr,De,Es,It,Nl)"},
-{"56C23D930F885BA5BF026FEABFC31856", "Battlefield 3 (USA) (En,Ja,Fr,De,Es,It,Zh,Ko,Pl,Ru,Cs) (Disc 1)"},
-{"77999579EE4378BDFAC9438CC9CDB44E", "Batman - Arkham City (Europe) (En,Fr,De,Es,It,Pt,Pl,Ru) (Disc 1)"},
-{"D35122E0E3F7B35C98BEFD706C260F83", "Crysis Warhead (USA) (En,Fr,De,Es,It,Pl,Ru,Cs,Hu) (Alt)"},
-{"9F574D56F1A4D7847C6A258DC2AF61A5", "Crysis Wars (USA)"},
-{"77999579EE4378BDFAC9438CC9CDB44E", "Batman - Arkham City (USA) (En,Fr,De,Es,It,Pt,Pl,Ru) (Disc 1)"},
-{"9F574D56F1A4D7847C6A258DC2AF61A5", "Crysis Wars (Turkey)"},
-{"FAF6DD75DDB335101CB77A714793DC28", "Batman - Arkham City - Game of the Year Edition (UK) (En,Fr,De,Es,It,Pt,Pl,Ru) (Disc 1)"},
-{"D69798C9198A6DB6A265833B350AC544", "Crysis Warhead (Turkey)"},
-{"C6DFF6B08EE126893840E107FD4EC9F6", "Alice - Madness Returns (USA)"},
-{"D35122E0E3F7B35C98BEFD706C260F83", "Crysis Warhead (Russia)"},
-{"3C340B2D4DA25039C136FEE1DC2DDE17", "Borderlands (Europe) (En,Fr,De,Es,It)"},
-{"9F574D56F1A4D7847C6A258DC2AF61A5", "Crysis Wars (Europe) (En,Fr,De,Es,It,Pl,Ru,Cs,Hu)"},
-{"9F574D56F1A4D7847C6A258DC2AF61A5", "Crysis Wars (Russia)"},
-{"6E481CDEBDB30B8889340CEC3300C931", "Battlefield 3 (UK) (Disc 1)"},
-{"0D5800F94643633CD3F025CFFD968DF2", "Dragon Age II (USA) (En,Fr,De,Es,It,Pl,Ru)"},
-{"3F1AFA4783F9001AACF0379A2A432A13", "Dragon Age II (USA) (En,Fr,De,Es,It,Pl,Ru)"},
-{"0D5800F94643633CD3F025CFFD968DF2", "Dragon Age II (Europe) (En,Fr,De,Es,It,Pl,Ru)"},
-{"3F1AFA4783F9001AACF0379A2A432A13", "Dragon Age II (Europe) (En,Fr,De,Es,It,Pl,Ru)"},
-{"C5AB3931A3CBB0141CC5A4638C391F4F", "BioShock 2 (Europe, Australia) (En,De,It)"},
-{"73DB35419A651CB69E78A641BBC88A4C", "BioShock 2 (Europe, Australia) (En,De,It)"},
-{"C5AB3931A3CBB0141CC5A4638C391F4F", "BioShock 2 (Europe) (En,Fr,Es)"},
-{"73DB35419A651CB69E78A641BBC88A4C", "BioShock 2 (Europe) (En,Fr,Es)"},
-{"C5AB3931A3CBB0141CC5A4638C391F4F", "BioShock 2 (Argentina) (En,Fr,Es)"},
-{"73DB35419A651CB69E78A641BBC88A4C", "BioShock 2 (Argentina) (En,Fr,Es)"},
-{"C39F3BCB74EA8E1215D39AC308F64229", "BioShock 2 (Russia)"},
-{"E5D63D369023A1D1074E7B13952FA0F2", "BioShock 2 (Russia)"},
-{"C5AB3931A3CBB0141CC5A4638C391F4F", "BioShock 2 (Europe) (En,De,It) (Alt)"},
-{"73DB35419A651CB69E78A641BBC88A4C", "BioShock 2 (Europe) (En,De,It) (Alt)"},
-{"C5AB3931A3CBB0141CC5A4638C391F4F", "BioShock 2 (Netherlands) (En,Fr,Es)"},
-{"73DB35419A651CB69E78A641BBC88A4C", "BioShock 2 (Netherlands) (En,Fr,Es)"},
-{"C5AB3931A3CBB0141CC5A4638C391F4F", "BioShock 2 (USA) (En,Fr,Es)"},
-{"73DB35419A651CB69E78A641BBC88A4C", "BioShock 2 (USA) (En,Fr,Es)"},
-        };
-        
-        public static readonly Dictionary<string, uint> MatroschkaFilenameDictionary = new Dictionary<string, uint>()
-        {
-{"output\\MassEffect2.aec", 16415836},
-{"LaunchEFLC.aec", 6716108},
-{"GridGameLauncher.aec", 7150283},
-{"Arcania.aec", 25823091},
-{"hp8.aec", 4646091},
-{"temp0.aec", 8705763},
-{"temp0.aec", 8705763},
-{"output\\BFBC2Game.aec", 27564780},
-{"LaunchEFLC.aec", 6716108},
-{"MassEffect3.aec", 22357747},
-{"output\\LaunchGTAIV.aec", 5124592},
-{"output\\LaunchGTAIV.aec", 5124592},
-{"temp0.aec", 30470419},
-{"temp0.aec", 35610875},
-{"MassEffect3.aec", 22357747},
-{"temp0.aec", 37988075},
-{"fifa.aec", 23069931},
-{"output\\FarCry2.aec", 5531004},
-{"output\\LaunchGTAIV.aec", 5124592},
-{"temp0.aec", 37988075},
-{"MassEffect3.aec", 22357747},
-{"temp0.aec", 35610875},
-{"output\\LaunchGTAIV.aec", 5124592},
-{"output\\FarCry2.aec", 5531004},
-{"output\\ShippingPC-WillowGame-SecuROM.aec", 35317996},
-{"output\\LaunchGTAIV.aec", 5124592},
-{"output\\Crysis.aec", 5445032},
-{"output\\crysis.aec", 12896904},
-{"temp0.aec", 37988075},
-{"output\\Crysis.aec", 5445032},
-{"deadspace_f.aec", 48093043},
-{"deadspace_f.aec", 48093043},
-{"deadspace_f.aec", 48093043},
-{"temp0.aec", 32920811},
-{"output\\crysis.aec", 12925576},
-{"temp0.aec", 32920811},
-{"deadspace_f.aec", 48093043},
-{"AliceMadnessReturns.aec", 17199339},
-{"output\\crysis.aec", 12925576},
-{"GridGameLauncher.aec", 7154379},
-{"GridGameLauncher.aec", 7150283},
-{"temp0.aec", 32920811},
-{"BatmanAC.aec", 45211355},
-{"output\\crysis.aec", 12925576},
-{"output\\Crysis.aec", 5445032},
-{"BatmanAC.aec", 45211355},
-{"output\\Crysis.aec", 5445032},
-{"BatmanAC.aec", 43612419},
-{"output\\crysis.aec", 12917384},
-{"AliceMadnessReturns.aec", 17199339},
-{"output\\crysis.aec", 12925576},
-{"output\\ShippingPC-WillowGame-SecuROM.aec", 35317996},
-{"output\\Crysis.aec", 5445032},
-{"output\\Crysis.aec", 5445032},
-{"temp0.aec", 32920811},
-{"dragonage2.aec", 12137051},
-{"dragonage2.aec", 12137051},
-{"dragonage2.aec", 12137051},
-{"dragonage2.aec", 12137051},
-{"./BioShock2Launcher.aec", 6732492},
-{"./Bioshock2Launcher.aec", 6728396},
-{"./BioShock2Launcher.aec", 6732492},
-{"./Bioshock2Launcher.aec", 6728396},
-{"./BioShock2Launcher.aec", 6732492},
-{"./Bioshock2Launcher.aec", 6728396},
-{"./Bioshock2Launcher.aec", 6728396},
-{"./BioShock2Launcher.aec", 6732492},
-{"./BioShock2Launcher.aec", 6732492},
-{"./Bioshock2Launcher.aec", 6728396},
-{"./BioShock2Launcher.aec", 6732492},
-{"./Bioshock2Launcher.aec", 6728396},
-{"./BioShock2Launcher.aec", 6732492},
-{"./Bioshock2Launcher.aec", 6728396},
-        };
     }
 }
