@@ -369,9 +369,9 @@ namespace BinaryObjectScanner.Protection
                 return "SecuROM Matroschka Package - No MD5? Please report"; 
 
 #if NET5_0_OR_GREATER
-            string MD5string = Convert.ToHexString(entry.MD5).ToUpper(); // TODO: is ToUpper right?
+            var MD5string = Convert.ToHexString(entry.MD5).ToUpper(); // TODO: is ToUpper right?
 #else
-            string MD5string = BitConverter.ToString(entry.MD5).Replace("-","").ToUpper(); // TODO: endianness?
+            var MD5string = BitConverter.ToString(entry.MD5).Replace("-","").ToUpper(); // TODO: endianness?
 #endif
             
             // Check if encrypted executable is known via hash
@@ -389,7 +389,7 @@ namespace BinaryObjectScanner.Protection
             
             // If not known, check if encrypted executable is likely an alt signing of a known executable
             // Filetime could be checked here, but if it was signed at a different time, the time will vary anyways
-            byte[]? readPathBytes = entry.Path;
+            var readPathBytes = entry.Path;
             if (readPathBytes == null)
                 readPathBytes = [];
 
@@ -397,7 +397,7 @@ namespace BinaryObjectScanner.Protection
             if (MatroschkaSizeFilenameDictionary.TryGetValue(entry.Size, out pathName) && pathName == Encoding.ASCII.GetString(readPathBytes))
                 return $"SecuROM Release Control - Unknown possible alt executable of size {entry.Size}, please report to us on Github!";
 
-            string? readPathName = Encoding.ASCII.GetString(readPathBytes);
+            var readPathName = Encoding.ASCII.GetString(readPathBytes);
             return $"SecuROM Release Control - Unknown executable {exe.Filename},{readPathName},{MD5string},{entry.Size}, PLEASE REPORT ON GITHUB IMMEDIATELY!!!";
         }
         
