@@ -143,7 +143,7 @@ namespace BinaryObjectScanner.Protection
                 return $"SecuROM 8.03.03+";
             }
 
-            // Get the .securom section, if it exists
+            // Get the .securom section, if it exists.
             if (exe.ContainsSection(".securom", exact: true))
             {
                 var sectionData = exe.GetFirstSectionData(".securom", true);
