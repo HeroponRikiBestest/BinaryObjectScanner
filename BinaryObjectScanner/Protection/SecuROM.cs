@@ -138,7 +138,7 @@ namespace BinaryObjectScanner.Protection
                 var sectionData = exe.GetFirstSectionData(".dsstext", true);
                 var moduloString = CheckModulo(sectionData, 0);
                 if (moduloString != null)
-                    return moduloString;
+                    return $"SecuROM 8.03.03+ - {moduloString}";
                 
                 return $"SecuROM 8.03.03+";
             }
@@ -149,7 +149,7 @@ namespace BinaryObjectScanner.Protection
                 var sectionData = exe.GetFirstSectionData(".securom", true);
                 var moduloString = CheckModulo(sectionData, 0);
                 if (moduloString != null)
-                    return moduloString;
+                    return $"SecuROM {GetV7Version(exe)} - {moduloString}";
                 
                 return $"SecuROM {GetV7Version(exe)}";
             }
@@ -209,8 +209,8 @@ namespace BinaryObjectScanner.Protection
                     
                     var match = MatchUtil.GetFirstMatch(file, sectionData, matchers, includeDebug);
                     if (!string.IsNullOrEmpty(match))
-                        return match;
-                        
+                        return $"SecuROM {GetV8WhiteLabelVersion(exe)} (White Label) - {match}";
+                    
                     return $"SecuROM {GetV8WhiteLabelVersion(exe)} (White Label)";
                 }
             }
