@@ -198,9 +198,10 @@ namespace BinaryObjectScanner.Protection
             {
                 // Both have the identifier found within `.rdata` but the version is within `.data`
                 // TODO: need help with what functions i can use to perform the check in .data
-                if (strs.Exists(s => s.Contains("/secuexp")))
+                var sectionData = exe.GetFirstSectionData(".data", true) ?? exe.GetFirstSectionData(".DATA", true);
+
+                if (strs.Exists(s => s.Contains("/secuexp")) || (strs.Exists(s => s.Contains("SecuExp.exe"))))
                 {
-                    var sectionData = exe.GetFirstSectionData(".data", true);
                     var matchers = new List<ContentMatchSet>
                     {
                         new(Encoding.ASCII.GetBytes("1d47b0b0981cc4fc00a6eccc0244a3"), WhiteLabelModuloHelper, ""),
@@ -211,22 +212,6 @@ namespace BinaryObjectScanner.Protection
                         return match;
                         
                     return $"SecuROM {GetV8WhiteLabelVersion(exe)} (White Label)";
-
-                }
-                else if (strs.Exists(s => s.Contains("SecuExp.exe")))
-                {
-                    var sectionData = exe.GetFirstSectionData(".data", true);
-                    var matchers = new List<ContentMatchSet>
-                    {
-                        new(Encoding.ASCII.GetBytes("1d47b0b0981cc4fc00a6eccc0244a3"), WhiteLabelModuloHelper, ""),
-                    };
-                    
-                    var match = MatchUtil.GetFirstMatch(file, sectionData, matchers, includeDebug);
-                    if (!string.IsNullOrEmpty(match))
-                        return match;
-                        
-                    return $"SecuROM {GetV8WhiteLabelVersion(exe)} (White Label)";
-
                 }
             }
 
