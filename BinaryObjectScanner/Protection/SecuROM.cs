@@ -209,7 +209,7 @@ namespace BinaryObjectScanner.Protection
                     
                     var match = MatchUtil.GetFirstMatch(file, sectionData, matchers, includeDebug);
                     if (!string.IsNullOrEmpty(match))
-                        return $"SecuROM {GetV8WhiteLabelVersion(exe)} (White Label) - {match}";
+                        return $"SecuROM {GetV8WhiteLabelVersion(exe)} (White Label) -{match}"; // Removed space to compensate for match handler
                     
                     return $"SecuROM {GetV8WhiteLabelVersion(exe)} (White Label)";
                 }
@@ -544,6 +544,7 @@ namespace BinaryObjectScanner.Protection
             return CheckModulo(fileContent, offset);
         }
 
+        // TODO: at present, this will return executables that aren't PA-capable. I have to find a way to distinguish that.
         private static string? CheckModulo(byte[]? sectionData, int offset)
         {
             if (sectionData == null)
@@ -557,8 +558,21 @@ namespace BinaryObjectScanner.Protection
                 var x = regex.Match(checkString);
                 if (x.Success)
                 {
-                    if (x.Value != "1d47b0b0981cc4fc00a6eccc0244a3")
-                        return x.Value;
+                    if (x.Value != "1d47b0b0981cc4fc00a6eccc0244a3") // TODO: this might need to always be checked for validation
+                    {
+                        // Check if PA-capable executable is known via modulo
+                        var value = ModuloDictionary.TryGetValue(x.Value, out var gameName);
+                        if (value == true)
+                            return $"{gameName}";
+                        if (x.Value.Length == 30) // In case the first character was junk data that happened to be 0-9/a-f
+                        {
+                            value = ModuloDictionary.TryGetValue(x.Value.Substring(1), out gameName);
+                            if (value == true)
+                                return $"{gameName}";
+                        }
+
+                        return $"Unknown executable with modulo {x.Value} - Please report to us on GitHub!";
+                    }
                 }
             }
 
