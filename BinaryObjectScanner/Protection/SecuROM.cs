@@ -937,8 +937,8 @@ namespace BinaryObjectScanner.Protection
             {"60e90d805739a039e0b1e7c6259d3f", "Delicious 9: Emily's Honeymoon Cruise"},
             {"61393e015902337e8d1a69cd0f4bb1", "Delicious: Emily's Moms vs Dads"},
             {"caa52129157efca5db9a29cf20a53", "Demigods"},
-            {"1003e12c0ebb666975041481bbd485", "DENUVO Insider"},
-            {"e69fb98089918a7543e15ed250d987", "DENUVO Introduction"},
+            {"1003e12c0ebb666975041481bbd485", "DENUVO Insider"}, // TODO: suspicious, investigate
+            {"e69fb98089918a7543e15ed250d987", "DENUVO Introduction"}, // TODO: suspicious, investigate
             {"3a4111b884b5ceb035e534379dbca5", "Department 42: The Mystery of the Nine"},
             {"b39271179fb0fe5f64daff2cfa0e7", "Depths of Betrayal"},
             {"b4711fea5ac91ea942dc1bdbfd9fb", "Detective Quest: The Crystal Slipper"},
