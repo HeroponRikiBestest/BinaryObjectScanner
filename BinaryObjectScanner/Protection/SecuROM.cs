@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Text;
+using System.Text.RegularExpressions;
 using BinaryObjectScanner.Interfaces;
 using SabreTools.IO.Extensions;
 using SabreTools.Matching;
@@ -131,13 +132,27 @@ namespace BinaryObjectScanner.Protection
             // Copyright is only checked because "Content Activation Library" seems broad on its own.
             if (name.OptionalEquals("Content Activation Library") && exe.LegalCopyright.OptionalContains("Sony DADC Austria AG"))
                 return $"SecuROM Content Activation v{exe.GetInternalVersion()}";
-            
+
             if (exe.ContainsSection(".dsstext", exact: true))
+            {
+                var sectionData = exe.GetFirstSectionData(".dsstext", true);
+                var moduloString = CheckModulo(sectionData, 0);
+                if (moduloString != null)
+                    return moduloString;
+                
                 return $"SecuROM 8.03.03+";
+            }
 
             // Get the .securom section, if it exists
             if (exe.ContainsSection(".securom", exact: true))
+            {
+                var sectionData = exe.GetFirstSectionData(".securom", true);
+                var moduloString = CheckModulo(sectionData, 0);
+                if (moduloString != null)
+                    return moduloString;
+                
                 return $"SecuROM {GetV7Version(exe)}";
+            }
 
             // Get the .sll section, if it exists
             if (exe.ContainsSection(".sll", exact: true))
@@ -182,10 +197,37 @@ namespace BinaryObjectScanner.Protection
             if (strs != null)
             {
                 // Both have the identifier found within `.rdata` but the version is within `.data`
+                // TODO: need help with what functions i can use to perform the check in .data
                 if (strs.Exists(s => s.Contains("/secuexp")))
+                {
+                    var sectionData = exe.GetFirstSectionData(".data", true);
+                    var matchers = new List<ContentMatchSet>
+                    {
+                        new(Encoding.ASCII.GetBytes("1d47b0b0981cc4fc00a6eccc0244a3"), WhiteLabelModuloHelper, ""),
+                    };
+                    
+                    var match = MatchUtil.GetFirstMatch(file, sectionData, matchers, includeDebug);
+                    if (!string.IsNullOrEmpty(match))
+                        return match;
+                        
                     return $"SecuROM {GetV8WhiteLabelVersion(exe)} (White Label)";
+
+                }
                 else if (strs.Exists(s => s.Contains("SecuExp.exe")))
+                {
+                    var sectionData = exe.GetFirstSectionData(".data", true);
+                    var matchers = new List<ContentMatchSet>
+                    {
+                        new(Encoding.ASCII.GetBytes("1d47b0b0981cc4fc00a6eccc0244a3"), WhiteLabelModuloHelper, ""),
+                    };
+                    
+                    var match = MatchUtil.GetFirstMatch(file, sectionData, matchers, includeDebug);
+                    if (!string.IsNullOrEmpty(match))
+                        return match;
+                        
                     return $"SecuROM {GetV8WhiteLabelVersion(exe)} (White Label)";
+
+                }
             }
 
             // Get the .cms_d and .cms_t sections, if they exist -- TODO: Confirm if both are needed or either/or is fine
@@ -506,5 +548,37 @@ namespace BinaryObjectScanner.Protection
 
             return null;
         }
+        
+        private static string? WhiteLabelModuloHelper(string file, byte[]? fileContent, List<int> positions)
+        {
+            if (positions.Count == 0)
+                return null;
+    
+            var offset = Math.Max(0, positions[0] - 32768); // arbitrary
+            
+            return CheckModulo(fileContent, offset);
+        }
+
+        private static string? CheckModulo(byte[]? sectionData, int offset)
+        {
+            if (sectionData == null)
+                return null; // TODO error reporting whatever 
+
+            var shorterSectionData = sectionData.ReadBytes(ref offset, 65536); //Arbitrary amount
+            var readStrings = shorterSectionData.ReadStringsWithEncoding(charLimit: 29, Encoding.ASCII);
+            var regex = new Regex("([a-f0-9]{29,30})$");
+            foreach (var checkString in readStrings)
+            { 
+                var x = regex.Match(checkString);
+                if (x.Success)
+                {
+                    if (x.Value != "1d47b0b0981cc4fc00a6eccc0244a3")
+                        return x.Value;
+                }
+            }
+
+            return null;
+        }
+
     }
 }
