@@ -146,6 +146,8 @@ namespace BinaryObjectScanner.Protection
             // Get the .securom section, if it exists.
             if (exe.ContainsSection(".securom", exact: true))
             {
+                var x = exe.EntryPointData;
+                
                 var sectionData = exe.GetFirstSectionData(".securom", true);
                 var moduloString = CheckModulo(sectionData, 0);
                 if (moduloString != null)
@@ -552,7 +554,7 @@ namespace BinaryObjectScanner.Protection
 
             var shorterSectionData = sectionData.ReadBytes(ref offset, 65536); //Arbitrary amount
             var readStrings = shorterSectionData.ReadStringsWithEncoding(charLimit: 29, Encoding.ASCII);
-            var regex = new Regex("([a-f0-9]{29,30})$");
+            var regex = new Regex("([a-f0-9]{29,30})$", RegexOptions.Compiled);
             foreach (var checkString in readStrings)
             { 
                 var x = regex.Match(checkString);
@@ -577,6 +579,145 @@ namespace BinaryObjectScanner.Protection
             }
 
             return null;
+        }
+
+        // -1 on validity failure, 0 if they're not comparable, score from 0 (least similar) to 100 (most similar) otherwise.
+        public int FuzzyCompare(string? firstHash, string? secondHash)
+        {
+            const int spamSumLength = 64;
+            uint score = 0;
+            uint hashOneBlockOneLength, hashOneBlockTwoLength, hashTwoBlockOneLength,hashTwoBlockTwoLength; 
+            string stringOneBlockOne, stringOneBlockTwo, stringTwoBlockOne, stringTwoBlockTwo;
+            string stringOnePrefixOnwards, stringTwoPrefixOnwards, tempString;
+            int stringOnePrefixIndex, stringTwoPrefixIndex;
+
+            if (firstHash == null || secondHash == null)
+                return -1;
+            
+            // Each SpamSum string starts with its block size before the first semicolon. Verify it's there and return
+            // otherwise.
+            stringOnePrefixIndex = firstHash.IndexOf(':');
+            if (stringOnePrefixIndex == -1)
+                return -1;
+            if (!uint.TryParse(firstHash.Substring(0, stringOnePrefixIndex), out uint blockSizeOne))
+                return -1;
+            stringTwoPrefixIndex = secondHash.IndexOf(':');
+            if (stringTwoPrefixIndex == -1)
+                return -1;
+            if (!uint.TryParse(secondHash.Substring(0, stringTwoPrefixIndex), out uint blockSizeTwo))
+                return -1;
+
+          // Check if blocksizes don't match. Each spamSum is broken up into two blocks. fuzzy_compare allows you to
+          // compare if one block in one hash is the same size as one block in the other hash, even if the other two are
+          // non-matching, so that's also checked for.
+          if (blockSizeOne != blockSizeTwo && 
+              (blockSizeOne > uint.MaxValue / 2 || blockSizeOne*2 != blockSizeTwo) && 
+              (blockSizeOne % 2 == 1 || blockSizeOne / 2 != blockSizeTwo)) 
+              return 0;
+          
+          // Get the spamSum strings starting past the blocksize prefix.
+          stringOnePrefixOnwards = firstHash.Substring(stringOnePrefixIndex+1);
+          stringTwoPrefixOnwards = firstHash.Substring(stringTwoPrefixIndex+1);
+
+          // Make sure there's something there
+          if (string.IsNullOrEmpty(stringOnePrefixOnwards) || string.IsNullOrEmpty(stringTwoPrefixOnwards)) 
+            return -1;
+          
+          // Split each spamSum into two blocks.
+          // Unclear why the second blocks must end before commas, but it is what fuzzy_compare does.
+          // If a spamSum doesn't have two parts past the prefix, it's malformed and must be returned.
+          
+          var tempSplit = stringOnePrefixOnwards.Split(':');
+          stringOneBlockOne = tempSplit[0];
+          if (tempSplit.Length == 1 || string.IsNullOrEmpty(tempSplit[1]))
+              return -1;
+          stringOneBlockTwo = tempSplit[1].Split(',')[0]; 
+          tempSplit = stringTwoPrefixOnwards.Split(':');
+          stringTwoBlockOne = tempSplit[0];
+          if (tempSplit.Length == 1 || string.IsNullOrEmpty(tempSplit[1]))
+              return -1;
+          stringTwoBlockTwo = tempSplit[1].Split(',')[0];
+          
+          // The comments for fuzzy_compare say to "Eliminate any sequences [of the same character] longer than 3".
+          // What this actually means is that any sequences of the same character longer than 3 need to be reduced to size 3,
+          // i.e. "9AgX87HAAAAAOKG5/Dqj3C2o/jlqW7Yn/nmcwlcKCwA9aJo9FcAKwf" becomes "9AgX87HAAAOKG5/Dqj3C2o/jlqW7Yn/nmcwlcKCwA9aJo9FcAKwf"
+          // The reason for doing this is that these sequences contain very little info, so cutting them down helps with
+          // part of scoring the strings later.
+
+          Regex r = new Regex("(.)(?<=\\1\\1\\1\\1)", RegexOptions.Compiled);
+
+          stringOneBlockOne = r.Replace(stringOneBlockOne, String.Empty);
+          stringOneBlockTwo = r.Replace(stringOneBlockTwo, String.Empty);
+          stringTwoBlockOne = r.Replace(stringTwoBlockOne, String.Empty);
+          stringTwoBlockTwo = r.Replace(stringTwoBlockTwo, String.Empty);
+          
+
+          // Return 100 immediately if both spamSums are identical.
+          if (blockSizeOne == blockSizeTwo && stringOneBlockOne.Length == stringTwoBlockOne.Length && stringOneBlockTwo.Length == stringTwoBlockTwo.Length) 
+            if (stringOneBlockOne == stringTwoBlockOne && stringOneBlockTwo == stringTwoBlockTwo) 
+              return 100;
+
+          // each signature has a string for two block sizes. We now
+          // choose how to combine the two block sizes. We checked above
+          // that they have at least one block size in common
+          if (blockSizeOne <= uint.MaxValue / 2) {
+            if (blockSizeOne == blockSizeTwo) {
+              uint score1, score2;
+              score1 = ScoreStrings(s1b1, s1b1len, s2b1, s2b1len, block_size1);
+              score2 = ScoreStrings(s1b2, s1b2len, s2b2, s2b2len, block_size1*2);
+              score = MAX(score1, score2);
+            }
+            else if (blockSizeOne * 2 == blockSizeTwo) {
+              score = ScoreStrings(s2b1, s2b1len, s1b2, s1b2len, block_size2);
+            }
+            else {
+              score = ScoreStrings(s1b1, s1b1len, s2b2, s2b2len, block_size1);
+            }
+          }
+          else {
+            if (blockSizeOne == blockSizeTwo) {
+              score = ScoreStrings(s1b1, s1b1len, s2b1, s2b1len, block_size1);
+            }
+            else if (block_size1 % 2 == 0 && block_size1 / 2 == block_size2) {
+              score = ScoreStrings(s1b1, s1b1len, s2b2, s2b2len, block_size1);
+            }
+            else {
+              score = 0;
+            }
+          }
+          
+          return (int)score;
+        }
+
+        public uint ScoreStrings(string stringOne, string stringTwo)
+        {
+            uint EDIT_DISTN_MAXLEN = 64;
+            uint EDIT_DISTN_INSERT_COST = 1;
+            uint EDIT_DISTN_REMOVE_COST = 1;
+            uint EDIT_DISTN_REPLACE_COST = 2;
+            
+            var t1 = new uint[EDIT_DISTN_MAXLEN+1];
+            var t2 = new uint[EDIT_DISTN_MAXLEN+1];
+            var t3 = new uint[EDIT_DISTN_MAXLEN+1];
+
+            uint i1, i2;
+            for (i2 = 0; i2 <= stringTwo.Length; i2++)
+                t1[i2] = i2 * EDIT_DISTN_REMOVE_COST;
+            for (i1 = 0; i1 < stringOne.Length; i1++) {
+                t2[0] = (i1 + 1) * EDIT_DISTN_INSERT_COST;
+                for (i2 = 0; i2 < stringTwo.Length; i2++) {
+                    uint cost_a = t1[i2+1] + EDIT_DISTN_INSERT_COST;
+                    uint cost_d = t2[i2] + EDIT_DISTN_REMOVE_COST;
+                    uint cost_r = t1[i2] + (stringOne[(int)i1] == stringTwo[(int)i2] ? 0 : EDIT_DISTN_REPLACE_COST);
+                    t2[i2+1] = Math.Min(Math.Min(cost_a, cost_d), cost_r);
+                }
+                t3 = t1;
+                t1 = t2;
+                t2 = t3;
+            }
+            var x = t1[stringTwo.Length];
+            Console.WriteLine(x);
+            return x;
         }
         
         /// <summary>
