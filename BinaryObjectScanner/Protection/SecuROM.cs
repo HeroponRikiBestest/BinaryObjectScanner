@@ -586,9 +586,8 @@ namespace BinaryObjectScanner.Protection
         {
             const int spamSumLength = 64;
             uint score = 0;
-            uint hashOneBlockOneLength, hashOneBlockTwoLength, hashTwoBlockOneLength,hashTwoBlockTwoLength; 
             string stringOneBlockOne, stringOneBlockTwo, stringTwoBlockOne, stringTwoBlockTwo;
-            string stringOnePrefixOnwards, stringTwoPrefixOnwards, tempString;
+            string stringOnePrefixOnwards, stringTwoPrefixOnwards;
             int stringOnePrefixIndex, stringTwoPrefixIndex;
 
             if (firstHash == null || secondHash == null)
@@ -663,23 +662,23 @@ namespace BinaryObjectScanner.Protection
           if (blockSizeOne <= uint.MaxValue / 2) {
             if (blockSizeOne == blockSizeTwo) {
               uint score1, score2;
-              score1 = ScoreStrings(s1b1, s1b1len, s2b1, s2b1len, block_size1);
-              score2 = ScoreStrings(s1b2, s1b2len, s2b2, s2b2len, block_size1*2);
-              score = MAX(score1, score2);
+              score1 = ScoreStrings(stringOneBlockOne, stringTwoBlockOne, blockSizeOne);
+              score2 = ScoreStrings(stringOneBlockTwo, stringTwoBlockTwo, blockSizeOne*2);
+              score = Math.Max(score1, score2);
             }
             else if (blockSizeOne * 2 == blockSizeTwo) {
-              score = ScoreStrings(s2b1, s2b1len, s1b2, s1b2len, block_size2);
+              score = ScoreStrings(stringTwoBlockOne, stringOneBlockTwo, blockSizeTwo);
             }
             else {
-              score = ScoreStrings(s1b1, s1b1len, s2b2, s2b2len, block_size1);
+              score = ScoreStrings(stringOneBlockOne, stringTwoBlockTwo, blockSizeOne);
             }
           }
           else {
             if (blockSizeOne == blockSizeTwo) {
-              score = ScoreStrings(s1b1, s1b1len, s2b1, s2b1len, block_size1);
+              score = ScoreStrings(stringOneBlockOne, stringTwoBlockOne, blockSizeOne);
             }
-            else if (block_size1 % 2 == 0 && block_size1 / 2 == block_size2) {
-              score = ScoreStrings(s1b1, s1b1len, s2b2, s2b2len, block_size1);
+            else if (blockSizeOne % 2 == 0 && blockSizeOne / 2 == blockSizeTwo) {
+              score = ScoreStrings(stringOneBlockOne, stringTwoBlockTwo, blockSizeOne);
             }
             else {
               score = 0;
@@ -689,8 +688,34 @@ namespace BinaryObjectScanner.Protection
           return (int)score;
         }
 
-        public uint ScoreStrings(string stringOne, string stringTwo)
+        public bool HasCommmonSubstring(string stringOne, string stringTwo)
         {
+            int stringOneLength = stringOne.Length;
+            int stringTwoLength = stringTwo.Length;
+
+            int largestSubstring = 0;
+            
+            for (int i = 0; i < stringOneLength; i++) {
+                for (int j = 0; j < stringTwoLength; j++) {
+                    int curr = 0;
+                    while ((i + curr) < stringOneLength && (j + curr) < stringTwoLength 
+                                          && stringOne[i + curr] == stringTwo[j + curr]) {
+                        curr++;
+                    }
+                    largestSubstring = Math.Max(largestSubstring, curr);
+                }
+            }
+            if (largestSubstring >= 7)
+                return true;
+            else
+                return false;
+        }
+        
+        public uint ScoreStrings(string stringOne, string stringTwo, uint blockSize)
+        {
+            if (!HasCommmonSubstring(stringOne, stringTwo))
+                return 0;
+            
             uint EDIT_DISTN_MAXLEN = 64;
             uint EDIT_DISTN_INSERT_COST = 1;
             uint EDIT_DISTN_REMOVE_COST = 1;
@@ -715,9 +740,34 @@ namespace BinaryObjectScanner.Protection
                 t1 = t2;
                 t2 = t3;
             }
-            var x = t1[stringTwo.Length];
-            Console.WriteLine(x);
-            return x;
+            long score = t1[stringTwo.Length];
+            
+            const int spamSumLength = 64;
+            const int rollingWindow = 7;
+            const int minBlocksize = 3;
+            score = (score * spamSumLength) / (stringOne.Length + stringTwo.Length);
+
+            // at this stage the score occurs roughly on a 0-SPAMSUM_LENGTH scale,
+            // with 0 being a good match and SPAMSUM_LENGTH being a complete
+            // mismatch
+
+            // rescale to a 0-100 scale (friendlier to humans)
+            score = (100 * score) / spamSumLength;
+
+            // now re-scale on a 0-100 scale with 0 being a poor match and
+            // 100 being a excellent match.
+            score = 100 - score;
+
+            //  printf ("s1len: %"PRIu32"  s2len: %"PRIu32"\n", (uint32_t)s1len, (uint32_t)s2len);
+
+            // when the blocksize is small we don't want to exaggerate the match size
+            if (blockSize >= (99 + rollingWindow) / rollingWindow * minBlocksize)
+                return (uint)score;
+            if (score > blockSize/minBlocksize * Math.Min(stringOne.Length, stringTwo.Length))
+            {
+                score = blockSize/minBlocksize * Math.Min(stringOne.Length, stringTwo.Length);
+            }
+            return (uint)score;
         }
         
         /// <summary>
