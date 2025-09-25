@@ -150,6 +150,7 @@ namespace BinaryObjectScanner.Protection
                 
                 var sectionData = exe.GetFirstSectionData(".securom", true);
                 var moduloString = CheckModulo(sectionData, 0);
+                // TODO: gate this behind 7.27 (unless debug mode is enabled? maybe debug mode drops it to 7.20?)
                 if (moduloString != null)
                     return $"SecuROM {GetV7Version(exe)} - {moduloString}";
                 
