@@ -564,12 +564,12 @@ namespace BinaryObjectScanner.Protection
                     if (x.Value != "1d47b0b0981cc4fc00a6eccc0244a3") // TODO: this might need to always be checked for validation
                     {
                         // Check if PA-capable executable is known via modulo
-                        var value = ModuloDictionary.TryGetValue(x.Value, out var gameName);
+                        var value = In80.TryGetValue(x.Value, out var gameName);
                         if (value == true)
                             return $"{gameName}";
                         if (x.Value.Length == 30) // In case the first character was junk data that happened to be 0-9/a-f
                         {
-                            value = ModuloDictionary.TryGetValue(x.Value.Substring(1), out gameName);
+                            value = In80.TryGetValue(x.Value.Substring(1), out gameName);
                             if (value == true)
                                 return $"{gameName}";
                         }
@@ -583,11 +583,11 @@ namespace BinaryObjectScanner.Protection
         }
         
         /// <summary>
-        /// Matches modulo of PA-capable executables to known ones
+        /// Matches modulo of PA-capable executables to known ones from 80_PA
         /// </summary>
         /// <remarks>Whenever this is updated, remove google chrome, it shouldn't be there.</remarks>
         // TODO: Verify no encoding issues
-        private static readonly Dictionary<string, string> ModuloDictionary = new()
+        private static readonly Dictionary<string, string> In80 = new()
         {
             {"b30a4603b7ce8bf34523ceaddec21", "1 Moment Of Time: Silentville"},
             {"ae18b8bbbb781413c87a9f4c4a176d", "1001 Jigsaw: Earth Chronicles 5"},
@@ -2111,5 +2111,33 @@ namespace BinaryObjectScanner.Protection
             {"8a9f177e36251610d1b2977c924225", "Zuma's Revenge! (GFW)"},
         };
 
+        /// <summary>
+        /// Matches modulo of handful of late EA games which use white label but have an origin login screen first
+        /// </summary>
+        /// <remarks>May work when Maxima comes out.</remarks>
+        // TODO: Verify no encoding issues
+        private static readonly Dictionary<string, string> EAWhite = new()
+        {
+            { "346db7a796a17a125475f0232bf1fb", "FIFA 13" },
+            { "882a43e527334f3c82d7b600e6e3d3", "Syndicate" },
+        };
+        
+        /// <summary>
+        /// Matches modulo of known PA-capable executables not in the 80_PA database.
+        /// </summary>
+        /// <remarks>If even a single PA-capable executable is known, it goes here.</remarks>
+        private static readonly Dictionary<string, string> NotIn80 = new()
+        {
+            { "98cc4c6b4a6b0594312afb1b6e171", "Mahjong Garden Deluxe" }, // Redump ID 124640
+        };
+        
+        /// <summary>
+        /// Matches modulo of known 7.27-onwards SecuROM executables where no PA-capable executable has that modulo.
+        /// </summary>
+        /// <remarks>If even a single PA-capable executable is known, it leaves here.</remarks>
+        private static readonly Dictionary<string, string> NotPA = new()
+        {
+            { "ee6a70552eb7e69c1df8e51255c31", "Oxford Advanced Learner's Dictionary 9" },
+        };
     }
 }
