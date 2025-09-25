@@ -581,8 +581,6 @@ namespace BinaryObjectScanner.Protection
 
             return null;
         }
-
-        
         
         /// <summary>
         /// Matches modulo of PA-capable executables to known ones
