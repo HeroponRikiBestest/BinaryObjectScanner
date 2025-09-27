@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using BinaryObjectScanner.Interfaces;
+using SabreTools.IO.Extensions;
 using SabreTools.Matching;
 using SabreTools.Matching.Paths;
 using SabreTools.Serialization.Wrappers;
@@ -25,7 +26,7 @@ namespace BinaryObjectScanner.Protection
                 return $"MediaMax CD-3";
 
             name = exe.ProductName;
-            
+
             if (name.OptionalStartsWith("LicGen Module", StringComparison.OrdinalIgnoreCase))
                 return $"MediaMax CD-3";
 

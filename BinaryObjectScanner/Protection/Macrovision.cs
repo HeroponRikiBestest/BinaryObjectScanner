@@ -276,8 +276,7 @@ namespace BinaryObjectScanner.Protection
             // This file is present in most, if not all, SafeDisc protected discs. It seems to have very consistent file sizes, only being found to use three different file sizes in it's entire run.
             // A rough estimate of the product and version can be gotten by checking the file size.
             // One filesize is known to overlap with both SafeDisc and CDS-300, and so is detected separately here.
-            var fi = new FileInfo(firstMatchedString);
-            return fi.Length switch
+            return firstMatchedString.FileSize() switch
             {
                 // Found in Redump entries 37832 and 66005. 
                 20 => "SafeDisc 1.00.025-1.41.001",
@@ -298,8 +297,7 @@ namespace BinaryObjectScanner.Protection
             if (string.IsNullOrEmpty(firstMatchedString) || !File.Exists(firstMatchedString))
                 return string.Empty;
 
-            var fi = new FileInfo(firstMatchedString);
-            return fi.Length switch
+            return firstMatchedString.FileSize() switch
             {
                 // Found in Redump entry 63488.
                 0 => "(Empty File)",
@@ -611,7 +609,7 @@ namespace BinaryObjectScanner.Protection
 
                     // Found in Redump entries 9617 and 49552. 
                     or "1.35.000"
-                    
+
                     // Found in Redump entries 2595 and 30121.
                     or "1.40.004"
 
@@ -741,7 +739,7 @@ namespace BinaryObjectScanner.Protection
                     // RealNetworks presumably acquired SafeDisc when they purchased Trymedia from Macrovision (https://realnetworks.com/press/releases/2008/realnetworks-acquire-trymedia-macrovision).
                     // Due to this being the only known sample, it may be that they did a trial run of a new version of SafeDisc, before deciding against continuing its development.
                     or "4.91.000"
-                    
+
                     => "SafeDisc",
 
                 // SafeDisc (Unconfirmed)

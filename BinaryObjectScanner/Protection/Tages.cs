@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.IO;
 using BinaryObjectScanner.Interfaces;
+using SabreTools.IO.Extensions;
 using SabreTools.Matching;
 using SabreTools.Matching.Content;
 using SabreTools.Matching.Paths;
@@ -32,7 +33,7 @@ namespace BinaryObjectScanner.Protection
                 return $"TAGES Activation Client {GetVersion(exe)}";
 
             name = exe.ProductName;
-            
+
             if (name.OptionalStartsWith("Application TagesSetup", StringComparison.OrdinalIgnoreCase))
                 return $"TAGES Driver Setup {GetVersion(exe)}";
             else if (name.OptionalStartsWith("T@GES", StringComparison.OrdinalIgnoreCase))

@@ -1,5 +1,6 @@
 ﻿using System.Collections.Generic;
 using BinaryObjectScanner.Interfaces;
+using SabreTools.IO.Extensions;
 using SabreTools.Matching;
 using SabreTools.Matching.Paths;
 using SabreTools.Serialization.Wrappers;
@@ -30,7 +31,7 @@ namespace BinaryObjectScanner.Protection
                 return "Uplay / Ubisoft Connect";
             else if (name.OptionalContains("Uplay launcher"))
                 return "Uplay / Ubisoft Connect";
-          
+
             name = exe.ProductName;
 
             // There's also a variant that looks like "Uplay <version> installer"

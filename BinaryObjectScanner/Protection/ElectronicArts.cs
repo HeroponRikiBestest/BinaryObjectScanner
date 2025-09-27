@@ -1,5 +1,6 @@
 ﻿using System;
 using BinaryObjectScanner.Interfaces;
+using SabreTools.IO.Extensions;
 using SabreTools.Serialization.Wrappers;
 
 namespace BinaryObjectScanner.Protection
@@ -19,7 +20,7 @@ namespace BinaryObjectScanner.Protection
                 return $"EA DRM Protection {exe.GetInternalVersion()}";
 
             name = exe.InternalName;
-            
+
             if (name.OptionalEquals("CDCode", StringComparison.Ordinal))
                 return $"EA CdKey Registration Module {exe.GetInternalVersion()}";
 

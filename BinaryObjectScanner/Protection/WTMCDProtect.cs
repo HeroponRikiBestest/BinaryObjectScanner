@@ -1,5 +1,6 @@
 ﻿using System.Collections.Generic;
 using BinaryObjectScanner.Interfaces;
+using SabreTools.IO.Extensions;
 using SabreTools.Matching;
 using SabreTools.Matching.Paths;
 using SabreTools.Serialization.Wrappers;
@@ -23,7 +24,7 @@ namespace BinaryObjectScanner.Protection
                 return "WTM Protection Viewer";
 
             name = exe.ProductName;
-            
+
             if (name.OptionalContains("WTM Copy Protection Viewer"))
                 return "WTM Protection Viewer";
 

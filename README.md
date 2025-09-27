@@ -4,15 +4,6 @@
 
 C# protection, packer, and archive scanning library. This currently compiles as a library so it can be used in any C# application. A reference application called `ProtectionScan` is also included to demonstrate the abilities of the library. For an example of a program implementing the library, see [MPF](https://github.com/SabreTools/MPF).
 
-The former **ExtractionTool** application that was included is now included in the [SabreTools.Serialization repository](https://github.com/SabreTools/SabreTools.Serialization).
-
-The following projects have influenced this library:
-
-- [BurnOut](http://burnout.sourceforge.net/) - Project that this library was initially based on. This project is fully unaffiliated with the original BurnOut and its authors.
-- [HLLibSharp](https://github.com/mnadareski/HLLibSharp) - Documentation around Valve package handling, including extraction.
-- [libbdplus](https://www.videolan.org/developers/libbdplus.html) - Documentation around the BD+ SVM files.
-- [libmspack](https://github.com/kyz/libmspack) - Documentation around the MS-CAB format and associated compression methods.
-
 Please visit our sibling project, [DRML](https://github.com/TheRogueArchivist/DRML), the DRM Library for a more in-depth look at some of the protections detected.
 
 ## Releases
@@ -242,3 +233,5 @@ Contributions to the project are welcome. Please follow the current coding style
 ## Special Thanks
 
 I want to give a special thanks to [TheRogueArchivist](https://github.com/TheRogueArchivist) and [HeroponRikiBestest](https://github.com/HeroponRikiBestest) who have gone above and beyond helping both fix existing checks as well as add new ones.
+
+I also want to give a shout out to [BurnOut](http://burnout.sourceforge.net/) which was the original basis and inspriation for this work. This project is fully unaffiliated with the original BurnOut and its authors.
