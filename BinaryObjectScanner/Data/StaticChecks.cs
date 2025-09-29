@@ -17,7 +17,7 @@ namespace BinaryObjectScanner.Data
         {
             get
             {
-                contentCheckClasses ??= InitCheckClasses<IContentCheck>();
+                contentCheckClasses ??= [];
                 return contentCheckClasses;
             }
         }
@@ -29,7 +29,7 @@ namespace BinaryObjectScanner.Data
         {
             get
             {
-                linearExecutableCheckClasses ??= InitCheckClasses<IExecutableCheck<LinearExecutable>>();
+                linearExecutableCheckClasses ??= [];
                 return linearExecutableCheckClasses;
             }
         }
@@ -41,7 +41,7 @@ namespace BinaryObjectScanner.Data
         {
             get
             {
-                msdosExecutableCheckClasses ??= InitCheckClasses<IExecutableCheck<MSDOS>>();
+                msdosExecutableCheckClasses ??= [];
                 return msdosExecutableCheckClasses;
             }
         }
@@ -53,7 +53,7 @@ namespace BinaryObjectScanner.Data
         {
             get
             {
-                newExecutableCheckClasses ??= InitCheckClasses<IExecutableCheck<NewExecutable>>();
+                newExecutableCheckClasses ??= [];
                 return newExecutableCheckClasses;
             }
         }
@@ -65,7 +65,7 @@ namespace BinaryObjectScanner.Data
         {
             get
             {
-                pathCheckClasses ??= InitCheckClasses<IPathCheck>();
+                pathCheckClasses ??= [];
                 return pathCheckClasses;
             }
         }
@@ -77,7 +77,31 @@ namespace BinaryObjectScanner.Data
         {
             get
             {
-                portableExecutableCheckClasses ??= InitCheckClasses<IExecutableCheck<PortableExecutable>>();
+                portableExecutableCheckClasses ??=
+                [
+                    new Protection.SecuROM(),
+                    new Packer.AdvancedInstaller(),
+                    new Packer.AutoPlayMediaStudio(),
+                    new Packer.EmbeddedFile(),
+                    new Packer.GenteeInstaller(),
+                    new Packer.GhostInstaller(),
+                    new Packer.InnoSetup(),
+                    new Packer.InstallAnywhere(),
+                    new Packer.InstallerVISE(),
+                    new Packer.IntelInstallationFramework(),
+                    new Packer.MicrosoftCABSFX(),
+                    new Packer.NSIS(),
+                    new Packer.PKLite(),
+                    new Packer.ReflexiveArcadeInstaller(),
+                    new Packer.SetupFactory(),
+                    new Packer.SevenZipSFX(),
+                    new Packer.SmartInstallMaker(),
+                    new Packer.SpoonInstaller(),
+                    new Packer.WinRARSFX(),
+                    new Packer.WinZipSFX(),
+                    new Packer.WiseInstaller(),
+                    new Packer.ZylomWrapper(),
+                ];
                 return portableExecutableCheckClasses;
             }
         }
@@ -123,13 +147,15 @@ namespace BinaryObjectScanner.Data
         /// <summary>
         /// Initialize all implementations of a type
         /// </summary>
+        /*
         private static T[] InitCheckClasses<T>()
             => InitCheckClasses<T>(Assembly.GetExecutingAssembly());
+            */
 
         /// <summary>
         /// Initialize all implementations of a type
         /// </summary>
-        private static T[] InitCheckClasses<T>(Assembly assembly)
+        /*private static T[] InitCheckClasses<T>(Assembly assembly)
         {
             // Get information from the type param
             string? interfaceName = typeof(T).FullName;
@@ -175,7 +201,7 @@ namespace BinaryObjectScanner.Data
             }
 
             return [.. classTypes];
-        }
+        }*/
 
         #endregion
     }

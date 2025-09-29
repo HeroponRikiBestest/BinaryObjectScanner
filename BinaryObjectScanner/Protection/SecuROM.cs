@@ -13,7 +13,7 @@ namespace BinaryObjectScanner.Protection
 {
     // TODO: Investigate SecuROM for Macintosh
     // TODO: Think of a way to detect dfe
-    public class SecuROM : IExecutableCheck<PortableExecutable>, IPathCheck
+    public class SecuROM : IExecutableCheck<PortableExecutable>/*, IPathCheck*/
     {
         /// <summary>
         /// Matches hash of the Release Control-encrypted executable to known hashes
@@ -161,7 +161,7 @@ namespace BinaryObjectScanner.Protection
             if (exe.ContainsSection(".sll", exact: true))
                 return $"SecuROM SLL Protected (for SecuROM v8.x)";
 
-            // Search after the last section
+            /*// Search after the last section
             string? v4Version = GetV4Version(exe);
             if (v4Version != null)
                 return $"SecuROM {v4Version}";
@@ -193,7 +193,7 @@ namespace BinaryObjectScanner.Protection
                     if (!string.IsNullOrEmpty(match))
                         return match;
                 }
-            }
+            }*/
 
             // Get the .rdata section strings, if they exist
             var strs = exe.GetFirstSectionStrings(".rdata");
@@ -228,7 +228,7 @@ namespace BinaryObjectScanner.Protection
         }
 
         /// <inheritdoc/>
-        public List<string> CheckDirectoryPath(string path, List<string>? files)
+        /*public List<string> CheckDirectoryPath(string path, List<string>? files)
         {
             var matchers = new List<PathMatchSet>
             {
@@ -254,10 +254,10 @@ namespace BinaryObjectScanner.Protection
             };
 
             return MatchUtil.GetAllMatches(files, matchers, any: true);
-        }
+        }*/
 
         /// <inheritdoc/>
-        public string? CheckFilePath(string path)
+        /*public string? CheckFilePath(string path)
         {
             var matchers = new List<PathMatchSet>
             {
@@ -277,9 +277,9 @@ namespace BinaryObjectScanner.Protection
             };
 
             return MatchUtil.GetFirstMatch(path, matchers, any: true);
-        }
+        }*/
 
-        /// <summary>
+        /*/// <summary>
         /// Try to get the SecuROM v4 version from the overlay, if possible
         /// </summary>
         /// <returns>The version on success, null otherwise</returns>
@@ -324,9 +324,9 @@ namespace BinaryObjectScanner.Protection
                 return "(very old, v3 or less)";
 
             return version;
-        }
+        }*/
 
-        /// <summary>
+        /*/// <summary>
         /// Try to get the SecuROM v5 version from section data, if possible
         /// </summary>
         /// <returns>The version on success, null otherwise</returns>
@@ -365,7 +365,7 @@ namespace BinaryObjectScanner.Protection
                 return string.Empty;
 
             return $"{major}.{minor[0]}{minor[1]}.{patch[0]}{patch[1]}.{revision[0]}{revision[1]}{revision[2]}{revision[3]}";
-        }
+        }*/
 
         /// <summary>
         /// Try to get the SecuROM v7 version from MS-DOS stub data, if possible
