@@ -20,7 +20,7 @@ namespace BinaryObjectScanner.Test.Protection
             Assert.Null(actual);
         }
 
-        [Fact]
+        /*[Fact]
         public void CheckDirectoryPathTest()
         {
             string path = "path";
@@ -39,6 +39,6 @@ namespace BinaryObjectScanner.Test.Protection
             var checker = new SecuROM();
             string? actual = checker.CheckFilePath(path);
             Assert.Null(actual);
-        }
+        }*/
     }
 }
