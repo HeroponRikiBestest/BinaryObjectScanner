@@ -7,7 +7,7 @@ using System;
 using System.Threading;
 using System.Diagnostics;
 
-namespace BinaryObjectScanner
+namespace ProtectionScan
 {
     /// <summary>
     /// Provides an IProgress{T} that invokes callbacks for each reported progress value.
@@ -21,7 +21,7 @@ namespace BinaryObjectScanner
     /// at the time of construction, the callbacks will be invoked on the ThreadPool.
     /// </remarks>
     /// <see href="https://github.com/dotnet/runtime/blob/main/src/libraries/System.Private.CoreLib/src/System/Progress.cs"/>
-    public class Progress<T> : IProgress<T> where T : EventArgs
+    internal class Progress<T> : IProgress<T> where T : EventArgs
     {
         /// <summary>The synchronization context captured upon construction.  This will never be null.</summary>
         private readonly SynchronizationContext? _synchronizationContext;

@@ -3,11 +3,11 @@ using System.Collections.Generic;
 using System.Text;
 using System.Text.RegularExpressions;
 using BinaryObjectScanner.Interfaces;
+using SabreTools.IO;
 using SabreTools.IO.Extensions;
-using SabreTools.Matching;
-using SabreTools.Matching.Content;
-using SabreTools.Matching.Paths;
+using SabreTools.IO.Matching;
 using SabreTools.Serialization.Wrappers;
+using static SabreTools.Data.Models.SecuROM.Constants;
 
 namespace BinaryObjectScanner.Protection
 {
@@ -98,7 +98,7 @@ namespace BinaryObjectScanner.Protection
             {45211355, "BatmanAC.aec"},
             {48093043, "deadspace_f.aec"},
         };
-        
+
         /// <inheritdoc/>
         public string? CheckExecutable(string file, PortableExecutable exe, bool includeDebug)
         {
@@ -113,22 +113,22 @@ namespace BinaryObjectScanner.Protection
             {
                 var packageType = CheckMatroschkaPackage(package, includeDebug);
                 if (packageType != null)
-                    return packageType;  
+                    return packageType;
             }
-            
+
             // Alf.dll
             string? name = exe.ProductName;
             if (name.OptionalEquals("DFA Unlock Dll"))
                 return $"SecuROM DFA Unlock v{exe.GetInternalVersion()}";
-            
+
             if (name.OptionalEquals("Release Control Unlock Dll"))
                 return $"SecuROM Release Control Unlock v{exe.GetInternalVersion()}";
-            
+
             // Dfa.dll and ca.dll. The former seems to become the latter later on.
             name = exe.FileDescription;
             if (name.OptionalEquals("SecuROM Data File Activation Library"))
                 return $"SecuROM Data File Activation v{exe.GetInternalVersion()}";
-            
+
             // Copyright is only checked because "Content Activation Library" seems broad on its own.
             if (name.OptionalEquals("Content Activation Library") && exe.LegalCopyright.OptionalContains("Sony DADC Austria AG"))
                 return $"SecuROM Content Activation v{exe.GetInternalVersion()}";
@@ -293,38 +293,37 @@ namespace BinaryObjectScanner.Protection
             // Search for the "AddD" string in the overlay
             bool found = false;
             int index = 0;
-            for (; index < 0x100 && index + 4 < overlayData.Length; index++)
+            for (; index < 0x20 && index + 4 < overlayData.Length; index++)
             {
                 int temp = index;
                 byte[] overlaySample = overlayData.ReadBytes(ref temp, 0x04);
-                if (overlaySample.EqualsExactly([0x41, 0x64, 0x64, 0x44]))
+                if (overlaySample.EqualsExactly(AddDMagicBytes))
                 {
                     found = true;
                     break;
                 }
             }
 
-            // If the string wasn't found in the first 0x100 bytes
+            // If the string wasn't found in the first 0x20 bytes
             if (!found)
                 return null;
 
-            // Read the version starting 4 bytes after the signature
-            index += 8;
-            char major = (char)overlayData[index];
-            index += 2;
+            // Deserialize the AddD header
+            var reader = new SabreTools.Serialization.Readers.SecuROMAddD();
+            var addD = reader.Deserialize(overlayData, index);
+            if (addD == null)
+                return null;
 
-            string minor = Encoding.ASCII.GetString(overlayData, index, 2);
-            index += 3;
+            // All samples have had 3 entries -- Revisit if needed
+            if (addD.EntryCount != 3)
+                return null;
 
-            string patch = Encoding.ASCII.GetString(overlayData, index, 2);
-            index += 3;
-
-            string revision = Encoding.ASCII.GetString(overlayData, index, 4);
-
-            if (!char.IsNumber(major))
+            // Format the version
+                string version = $"{addD.Version}.{addD.Build}";
+            if (!char.IsNumber(version[0]))
                 return "(very old, v3 or less)";
 
-            return $"{major}.{minor}.{patch}.{revision}";
+            return version;
         }
 
         /// <summary>
@@ -471,11 +470,11 @@ namespace BinaryObjectScanner.Protection
             
             // If not known, check if encrypted executable is likely an alt signing of a known executable
             // Filetime could be checked here, but if it was signed at a different time, the time will vary anyways
-            var readPathBytes = entry.Path;
-            if (readPathBytes == null || readPathBytes.Length == 0)
+            var readPath = entry.Path;
+            if (readPath == null || readPath.Length == 0)
                 return $"SecuROM Release Control - Unknown executable {md5String},{entry.Size} - Please report to us on GitHub!";
-            
-            var readPathName = Encoding.ASCII.GetString(readPathBytes).TrimEnd('\0');
+
+            var readPathName = readPath.TrimEnd('\0');
             if (MatroschkaSizeFilenameDictionary.TryGetValue(entry.Size, out var pathName) && pathName == readPathName)
                 return $"SecuROM Release Control - Unknown possible alt executable of size {entry.Size} - Please report to us on GitHub";
 
@@ -522,15 +521,15 @@ namespace BinaryObjectScanner.Protection
             // Regardless, even if these are given their own named variant later, this check should remain in order to
             // catch other modified PA variants (this would have also caught EA GAM, for example) and to match PiD's 
             // detection abilities.
-            
-            name = exe.ExportTable?.ExportNameTable?.Strings?[0];
+
+            name = exe.ExportNameTable?.Strings?[0];
             if (name.OptionalEquals("drm_pagui_doit"))
             {
                 // Not all of them are guaranteed to have an internal version
                 var version = exe.GetInternalVersion();
                 if (string.IsNullOrEmpty(version))
                     return $"SecuROM Product Activation - Modified";
-                
+
                 return $"SecuROM Product Activation v{exe.GetInternalVersion()} - Modified";
             }
 

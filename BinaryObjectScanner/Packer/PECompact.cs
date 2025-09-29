@@ -17,12 +17,16 @@ namespace BinaryObjectScanner.Packer
             // TODO: Get more granular version detection. PiD is somehow able to detect version ranges based
             // on the data in the file. This may be related to information in other fields
 
+            // Investigate the ".pec" section, seemingly related to "pec1"
+
             // Get the pec1 section, if it exists
             if (exe.ContainsSection("pec1", exact: true))
                 return "PE Compact v1.x";
 
-            // Get the PEC2 section, if it exists -- TODO: Verify this comment since it's pulling the .text section
+            // Get the .text section, if it exists
             var textSection = exe.GetFirstSection(".text", exact: true);
+
+            // Check for "PEC2" in the pointer to relocations
             if (textSection?.PointerToRelocations == 0x32434550)
             {
                 if (textSection.PointerToLinenumbers != 0)

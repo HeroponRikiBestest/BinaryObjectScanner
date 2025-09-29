@@ -3,7 +3,6 @@ using SabreTools.Serialization.Wrappers;
 
 namespace BinaryObjectScanner.Packer
 {
-    // TODO: Add extraction
     // TODO: Verify that all versions are detected
     public class AdvancedInstaller : IExecutableCheck<PortableExecutable>
     {
@@ -15,7 +14,7 @@ namespace BinaryObjectScanner.Packer
             if (strs != null)
             {
                 if (strs.Exists(s => s.Contains("Software\\Caphyon\\Advanced Installer")))
-                    return "Caphyon Advanced Installer";
+                    return "Caphyon Advanced Installer SFX";
             }
 
             return null;
