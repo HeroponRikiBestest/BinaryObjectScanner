@@ -149,7 +149,7 @@ namespace BinaryObjectScanner.Protection
                 var x = exe.EntryPointData;
                 
                 var sectionData = exe.GetFirstSectionData(".securom", true);
-                var moduloString = CheckModulo(sectionData, 0);
+                var moduloString = CheckModulo(sectionData, 0); // TODO: might only be pre 7.27, but at least one .securom section is smaller than 65536
                 // TODO: gate this behind 7.27 (unless debug mode is enabled? maybe debug mode drops it to 7.20?)
                 if (moduloString != null)
                     return $"SecuROM {GetV7Version(exe)} - {moduloString}";
@@ -585,6 +585,7 @@ namespace BinaryObjectScanner.Protection
         /// Matches modulo of PA-capable executables to known ones from 80_PA
         /// </summary>
         /// <remarks>Whenever this is updated, remove google chrome, it shouldn't be there.</remarks>
+        /// When adding: convert all modulo to lowercase, this is how they're stored in the executable.
         // TODO: Verify no encoding issues
         private static readonly Dictionary<string, string> In80 = new()
         {
@@ -844,8 +845,8 @@ namespace BinaryObjectScanner.Protection
             {"1cad0c0ec120fbcfbe3d8e21a2f85f", "Command & Conquer 3: Kane's Wrath"},
             {"1081d8b881c3ce565df4c26c967fdb", "Command & Conquer 3: Tiberium Wars"},
             {"ab3b9890860692232c0142c3858963", "Command & Conquer: Red Alert 3"},
-            {"19a57883efafbbc2a6745711ba605f", "Command & Conquer: Red Alert 3 ﻗ°½ Uprising"},
-            {"1656AF27C2D922DFE2F90A763CFE33", "Company of Heroes: Tales of Valor (DVD)\\validators\\ddho,drho,gguo,gtho,mtbo,rspa,toho"},
+            {"19a57883efafbbc2a6745711ba605f", "Command & Conquer: Red Alert 3 - Uprising"},
+            {"1656af27c2d922dfe2f90a763cfe33", "Company of Heroes: Tales of Valor (DVD)\\validators\\ddho,drho,gguo,gtho,mtbo,rspa,toho"},
             {"962d841c45d03c6d49079559ecf77", "Company of Heroes: Tales of Valor (DVD)\\validators\\ddt"},
             {"24688dc284a7a5acea99591a504d85", "Company of Heroes: Tales of Valor (DVD)\\validators\\dnrc,drpc,ggic,gtwc,mtbc,nxrc,topc"},
             {"3823847ad9e211ab26d03a5ea50edb", "Company of Heroes: Tales of Valor (DVD)\\validators\\drge,dsge,ggge,gloc,gtge,mtge,nxge,toge"},
@@ -2137,6 +2138,15 @@ namespace BinaryObjectScanner.Protection
         private static readonly Dictionary<string, string> NotPA = new()
         {
             { "ee6a70552eb7e69c1df8e51255c31", "Oxford Advanced Learner's Dictionary 9" },
+        };
+        
+        /// <summary>
+        /// Matches modulo of known 7.27-onwards SecuROM executables where they will never have a PA version, most likely.
+        /// </summary>
+        /// <remarks>If even a single PA-capable executable is known, it leaves here.</remarks>
+        private static readonly Dictionary<string, string> NeverPA = new()
+        {
+            { "27383ab91ddc24d0f9ac5646a87e55", "Sacred 2 Game Server" }, // proper game executable has PA, this is just obfuscated/encrypted/whatever
         };
     }
 }
