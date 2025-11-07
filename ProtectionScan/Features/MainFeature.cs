@@ -288,7 +288,7 @@ namespace ProtectionScan.Features
                 }
                 
                 Dictionary<string, dynamic> rootDictionary = new Dictionary<string, dynamic>();
-                Stack<Dictionary<string, dynamic>> dictionaryStack = new Stack<Dictionary<string, dynamic>>();
+                Stack<(string,dynamic)> dictionaryStack = new Stack<(string,dynamic)>();
                 Dictionary<string, string[]>? workingDirectoryProtections = null; //new Dictionary<string, dynamic>();
                 string workingDirectoryString = "";
 
@@ -332,14 +332,8 @@ namespace ProtectionScan.Features
                             if (dictionaryStack.Count == 0)
                                 rootDictionary.Add(directoryName, workingDirectoryProtections);
                             else
-                            {
-                                var tempDictionary = new Dictionary<string, dynamic>()
-                                {
-                                    {directoryName, workingDirectoryProtections},
-                                };
-                                
-                                dictionaryStack.Push(tempDictionary);
-                            }
+
+                                dictionaryStack.Push((directoryName, workingDirectoryProtections));
                             workingDirectoryProtections = null;
                         }
 
@@ -349,12 +343,12 @@ namespace ProtectionScan.Features
                             if (nextDirectoryIndex < 0)
                                 nextDirectoryIndex = currentDirectoryString.IndexOf(pathChar, workingDirectoryString.Length);
 
-                            string nextDirectory = currentDirectoryString.Substring(0, nextDirectoryIndex);
-                            var tempDictionary = new Dictionary<string, dynamic>()
-                            {
-                                {nextDirectory, new Dictionary<string, dynamic>()},
-                            };
-                            dictionaryStack.Push(tempDictionary);
+                            string nextDirectory;
+                            if (nextDirectoryIndex < 0)
+                                nextDirectory = currentDirectoryString;
+                            else 
+                                nextDirectory = currentDirectoryString.Substring(0, nextDirectoryIndex);
+                            dictionaryStack.Push((nextDirectory, new Dictionary<string, dynamic>()));
                             if (workingDirectoryString == "")
                                 workingDirectoryString = nextDirectory;
                             else
@@ -377,10 +371,13 @@ namespace ProtectionScan.Features
                             {
                                 var fartherFromRootDictionary = dictionaryStack.Pop();
                                 var closerToRootDictionary = dictionaryStack.Pop();
-                                closerToRootDictionary.Add(nextDirectory, fartherFromRootDictionary);
+                                closerToRootDictionary.Item2.Add(fartherFromRootDictionary.Item1, fartherFromRootDictionary.Item2);
                                 dictionaryStack.Push(closerToRootDictionary);
                             }
-                            workingDirectoryString = workingDirectoryString.Substring(0, nextDirectoryIndex);
+                            if (nextDirectoryIndex < 0)
+                                workingDirectoryString = "";
+                            else
+                                workingDirectoryString = workingDirectoryString.Substring(0, nextDirectoryIndex);
                         }
                     }
                     
@@ -405,45 +402,46 @@ namespace ProtectionScan.Features
                         rootDictionary.Add(directoryName, workingDirectoryProtections);
                     else
                     {
-                        var tempDictionary = dictionaryStack.Pop();
-                        if (!tempDictionary.ContainsKey(directoryName))
-                        {
-                            tempDictionary.Add(directoryName, workingDirectoryProtections);// this should never happen
+                        var tempTuple = dictionaryStack.Pop();
+                        if (tempTuple.Item1 != (directoryName))
                             Console.WriteLine($"This should never happen");
-                        }
-                        else
-                        {
-                            tempDictionary[directoryName] = workingDirectoryProtections;// this should never happen
-                        }
-                                
-                        dictionaryStack.Push(tempDictionary);
+                        
+                        tempTuple.Item2 = workingDirectoryProtections;
+                        dictionaryStack.Push(tempTuple);
                     }
                     workingDirectoryProtections = null;
                 }
 
                 while (dictionaryStack.Count >= 1)
                 {
-                    int nextDirectoryIndex = workingDirectoryString.LastIndexOf(pathChar);
-                    string nextDirectory = workingDirectoryString.Substring(nextDirectoryIndex + 1);
                     if (dictionaryStack.Count <= 0)
                     {
                         Console.WriteLine($"Everything has gone wrong");
                     } 
                     else if (dictionaryStack.Count == 1)
                     {
-                        var tempDictionary = dictionaryStack.Pop();
-                        var directoryKey = tempDictionary.Keys.First();
-                        rootDictionary.Add(nextDirectory, tempDictionary[directoryKey]);
+                        var tempTuple = dictionaryStack.Pop();
+                        rootDictionary.Add(tempTuple.Item1, tempTuple.Item2);
                     }
                     else
                     {
                         var fartherFromRootDictionary = dictionaryStack.Pop();
                         var closerToRootDictionary = dictionaryStack.Pop();
-                        
-                        var closerDirectoryKey = closerToRootDictionary.Keys.First();
-                        var fartherDirectoryKey = fartherFromRootDictionary.Keys.First();
-                        closerToRootDictionary[closerDirectoryKey].Add(nextDirectory, fartherFromRootDictionary[fartherDirectoryKey]);
-                        dictionaryStack.Push(closerToRootDictionary);
+                        var tempDictionary = new Dictionary<string, dynamic>()
+                        {
+                            {fartherFromRootDictionary.Item1, fartherFromRootDictionary.Item2}
+                        };
+                        foreach (var kvp in closerToRootDictionary.Item2)
+                        {
+                            if (kvp is not null)
+                            {
+                                if (!tempDictionary.ContainsKey(kvp.Key)) {
+                                    tempDictionary.Add(kvp.Key, (object)kvp.Value);
+                                }   
+                            }
+                        }
+                        (string, Dictionary<string, dynamic>) tempTuple = (closerToRootDictionary.Item1, tempDictionary);
+                        dictionaryStack.Push(tempTuple);
                     }
                 } // Should end with WDS = ""
 
