@@ -425,23 +425,23 @@ namespace ProtectionScan.Features
                     }
                     else
                     {
-                        var fartherFromRootDictionary = dictionaryStack.Pop();
-                        var closerToRootDictionary = dictionaryStack.Pop();
-                        var tempDictionary = new Dictionary<string, dynamic>()
+                    var fartherFromRootDictionary = dictionaryStack.Pop();
+                    var closerToRootDictionary = dictionaryStack.Pop();
+                    var tempDictionary = new Dictionary<string, dynamic>()
+                    {
+                        {fartherFromRootDictionary.Item1, fartherFromRootDictionary.Item2}
+                    };
+                    foreach (var kvp in closerToRootDictionary.Item2)
+                    {
+                        if (kvp is not null)
                         {
-                            {fartherFromRootDictionary.Item1, fartherFromRootDictionary.Item2}
-                        };
-                        foreach (var kvp in closerToRootDictionary.Item2)
-                        {
-                            if (kvp is not null)
-                            {
-                                if (!tempDictionary.ContainsKey(kvp.Key)) {
-                                    tempDictionary.Add(kvp.Key, (object)kvp.Value);
-                                }   
-                            }
+                            if (!tempDictionary.ContainsKey(kvp.Key)) {
+                                tempDictionary.Add(kvp.Key, (object)kvp.Value);
+                            }   
                         }
-                        (string, Dictionary<string, dynamic>) tempTuple = (closerToRootDictionary.Item1, tempDictionary);
-                        dictionaryStack.Push(tempTuple);
+                    }
+                    (string, Dictionary<string, dynamic>) tempTuple = (closerToRootDictionary.Item1, tempDictionary);
+                    dictionaryStack.Push(tempTuple);
                     }
                 } // Should end with WDS = ""
 
