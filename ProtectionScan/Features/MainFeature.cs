@@ -1,6 +1,9 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+#if NET5_0_OR_GREATER
+using System.Text.Json.Serialization;
+#endif
 using BinaryObjectScanner;
 using SabreTools.CommandLine;
 using SabreTools.CommandLine.Inputs;
@@ -32,9 +35,10 @@ namespace ProtectionScan.Features
 #if NETCOREAPP
         private const string _jsonName = "json";
         internal readonly FlagInput JsonInput = new(_jsonName, ["-j", "--json"], "Output to json file");
-
+#if NET5_0_OR_GREATER
         private const string _nestedName = "nested";
         internal readonly FlagInput NestedInput = new(_nestedName, ["-n", "--nested"], "Output to nested json file");
+#endif
 #endif
 
         private const string _noArchivesName = "no-archives";
@@ -67,10 +71,12 @@ namespace ProtectionScan.Features
         /// </summary>
         public bool Json { get; private set; }
 
+#if NET5_0_OR_GREATER
         /// <summary>
         /// Enable nested JSON output
         /// </summary>
         public bool Nested { get; private set; }
+#endif
 #endif
 
         public MainFeature()
@@ -82,7 +88,9 @@ namespace ProtectionScan.Features
             Add(FileOnlyInput);
 #if NETCOREAPP
             Add(JsonInput);
+#if NET5_0_OR_GREATER
             Add(NestedInput);
+#endif
 #endif
             Add(NoContentsInput);
             Add(NoArchivesInput);
@@ -102,7 +110,9 @@ namespace ProtectionScan.Features
             FileOnly = GetBoolean(_fileOnlyName);
 #if NETCOREAPP
             Json = GetBoolean(_jsonName);
+#if NET5_0_OR_GREATER
             Nested = GetBoolean(_nestedName);
+#endif
 #endif
 
             // Create scanner for all paths
@@ -166,8 +176,10 @@ namespace ProtectionScan.Features
 #if NETCOREAPP
                 if (Json)
                     WriteProtectionResultJson(path, protections);
+#if NET5_0_OR_GREATER
                 if (Nested)
                     WriteProtectionResultNestedJson(path, protections);
+#endif
 #endif
             }
             catch (Exception ex)
@@ -276,6 +288,7 @@ namespace ProtectionScan.Features
             }
         }
 
+#if NET5_0_OR_GREATER
         /// <summary>
         /// Write the protection results from a single path to a nested json file, if possible
         /// </summary>
@@ -297,9 +310,10 @@ namespace ProtectionScan.Features
                 // A nested dictionary is used in order to avoid complex and unnecessary custom serialization.
                 // A dictionary with a dynamic value is used so that it's not necessary to first parse entries into a 
                 // traditional node system and then bubble up the entire chain creating non-dynamic dictionaries.
-                var nestedDictionary = new Dictionary<string, dynamic>();
-                var trimmedPath = path.TrimEnd(['\\', '/']); 
-                
+                var trimmedPath = path.TrimEnd(['\\', '/']);
+                var nestedNode = new PathNode();
+                nestedNode.Children = new Dictionary<string, PathNode>();
+
                 // Sort the keys for consistent output
                 string[] keys = [.. protections.Keys];
                 Array.Sort(keys);
@@ -318,31 +332,23 @@ namespace ProtectionScan.Features
                     //foreach (var fileProtection in fileProtections)
 
                     // Inserts key and protections into nested dictionary, with the key trimmed of the base path.
-                    DeepInsert(ref nestedDictionary, key.Substring(trimmedPath.Length), fileProtections);
+                    DeepInsert(ref nestedNode, key.Substring(trimmedPath.Length), fileProtections);
                 }
-
-                // While it's possible to hardcode the root dictionary key to be changed to the base path beforehand, 
-                // it's cleaner to avoid trying to circumvent the path splitting logic, and just move the root 
-                // dictionary value into an entry with the base path as the key.
-                // There is no input as far as has been tested that can result in there not being a root dictionary key
-                // of an empty string, so this is safe.
-                // The only exception is if absolutely no protections were returned whatsoever, which is why there's a
-                // safeguard here at all
-                if (nestedDictionary.ContainsKey(""))
+                
+                var finalDictionary = new Dictionary<string, PathNode>()
                 {
-                    var tempValue = nestedDictionary[""];
-                    nestedDictionary.Remove("");
-                    nestedDictionary.Add(trimmedPath, tempValue);
+                    {trimmedPath, nestedNode}
+                };
 
                     // Create the output data
-                    var jsonSerializerOptions = new System.Text.Json.JsonSerializerOptions { WriteIndented = true };
-                    string serializedData = System.Text.Json.JsonSerializer.Serialize(nestedDictionary, jsonSerializerOptions);
+                    var jsonSerializerOptions = new System.Text.Json.JsonSerializerOptions { WriteIndented = true, DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull, IncludeFields = false};
+                    string serializedData = System.Text.Json.JsonSerializer.Serialize(finalDictionary, jsonSerializerOptions);
 
                     // Write the output data
                     // TODO: this prints plus symbols wrong, probably some other things too
                     jsw.WriteLine(serializedData);
                     jsw.Flush(); 
-                }
+                
             }
             catch (Exception ex)
             {
@@ -354,12 +360,13 @@ namespace ProtectionScan.Features
         /// <summary>
         /// Inserts file protection dictionary entries into a nested dictionary based on path
         /// </summary>
-        /// <param name="nestedDictionary">File or directory path</param>
+        /// <param name="nestedNode">File or directory path</param>
         /// <param name="path">The "key" for the given protection entry, already trimmed of its base path</param>
         /// <param name="protections">The scanned protection(s) for a given file</param>
-        public static void DeepInsert(ref Dictionary<string, dynamic> nestedDictionary, string path, string[] protections)
+        public static void DeepInsert(ref PathNode nestedNode, string path, string[] protections)
         {
-            var current = nestedDictionary; 
+            PathNode current = nestedNode;
+            path = path.TrimStart(Path.DirectorySeparatorChar);
             var pathParts = path.Split(Path.DirectorySeparatorChar); 
 
             // Traverses the nested dictionary until the "leaf" dictionary is reached.
@@ -368,42 +375,42 @@ namespace ProtectionScan.Features
                 var part = pathParts[i];
                 if (i != (pathParts.Length - 1))
                 {
-                    if (!current.ContainsKey(part)) // Inserts new subdictionaries if one doesn't already exist
+                    if (current.Children == null)
+                        current.Children = new Dictionary<string, PathNode>();
+
+                    if (!current.Children.ContainsKey(part)) 
                     {
-                        var innerObject = new Dictionary<string, dynamic>();
-                        current[part] = innerObject;
-                        current =  innerObject;
+                            current.Children.Add(part, new PathNode());
+                            current.Children[part].Children = new Dictionary<string, PathNode>();
                     }
-                    else // Traverses already existing subdictionaries
+                    else if (current.Children[part].Protections != null)
                     {
-                        var innerObject = current[part];
-                        
-                        // If i.e. a packer has protections detected on it, and then files within it also have 
-                        // detections of their own, the later traversal of the files within it will fail, as
-                        // the subdictionary for that packer has already been set to <string, string>. Since it's
-                        // no longer dynamic after being assigned once, the existing value must be pulled, then the
-                        // new subdictionary can be added, and then the existing value can be re-added within the
-                        // packer with a key of an empty string, in order to indicate it's for the packer itself, and
-                        // to avoid potential future collisions.
-                        if (innerObject.GetType() != typeof(Dictionary<string, object>))
-                        {
-                            current[part] = new Dictionary<string, object>();
-                            current = current[part];
-                            current.Add("", innerObject);
-                        }
-                        else
-                        {
-                            current[part] = innerObject;
-                            current =  innerObject;       
-                        }
+                        var tempNode = current.Children[part];
+                        current.Children[part].Children = new Dictionary<string, PathNode>();
+                        var pathNodes = current.Children[part].Children;
+                        if (pathNodes != null) 
+                            pathNodes.Add("", tempNode);
                     }
+                    
+                    current = current.Children[part];
                 }
                 else // If the "leaf" dictionary has been reached, add the file and its protections.
                 {
-                    current.Add(part, protections);
+                    if (current.Protections == null)
+                        current.Protections = new Dictionary<string, string[]>();
+
+                    current.Children = null;
+                    current.Protections.Add(part, protections);
                 }
             }
         }
+
+        public class PathNode
+        {
+            public Dictionary<string, PathNode>? Children { get; set; }
+            public Dictionary<string, string[]>? Protections { get; set; } 
+        };
+#endif
 #endif
     }
 }
