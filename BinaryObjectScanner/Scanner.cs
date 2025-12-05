@@ -503,6 +503,7 @@ namespace BinaryObjectScanner
                 RealArcadeInstaller obj => new FileType.RealArcadeInstaller(obj),
                 RealArcadeMezzanine obj => new FileType.RealArcadeMezzanine(obj),
                 SFFS obj => new FileType.SFFS(obj),
+                MicrosoftCabinet obj => new FileType.MicrosoftCabinet(obj),
 
                 // Fall back on the file type for types not implemented in Serialization
                 _ => fileType switch
