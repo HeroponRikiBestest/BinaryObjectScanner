@@ -13,125 +13,41 @@ namespace BinaryObjectScanner.Data
         /// <summary>
         /// Cache for all IContentCheck types
         /// </summary>
-        public static IContentCheck[] ContentCheckClasses
-        {
-            get
-            {
-                contentCheckClasses ??= InitCheckClasses<IContentCheck>();
-                return contentCheckClasses;
-            }
-        }
-
+        public static IContentCheck[] ContentCheckClasses = [];
+        
         /// <summary>
         /// Cache for all IDiskImageCheck<ISO9660> types
         /// </summary>
-        public static IDiskImageCheck<ISO9660>[] ISO9660CheckClasses
-        {
-            get
-            {
-                iso9660CheckClasses ??= InitCheckClasses<IDiskImageCheck<ISO9660>>();
-                return iso9660CheckClasses;
-            }
-        }
+        public static IDiskImageCheck<ISO9660>[] ISO9660CheckClasses = [];
 
         /// <summary>
         /// Cache for all IExecutableCheck<LinearExecutable> types
         /// </summary>
-        public static IExecutableCheck<LinearExecutable>[] LinearExecutableCheckClasses
-        {
-            get
-            {
-                linearExecutableCheckClasses ??= InitCheckClasses<IExecutableCheck<LinearExecutable>>();
-                return linearExecutableCheckClasses;
-            }
-        }
+        public static IExecutableCheck<LinearExecutable>[] LinearExecutableCheckClasses = [];
 
         /// <summary>
         /// Cache for all IExecutableCheck<MSDOS> types
         /// </summary>
-        public static IExecutableCheck<MSDOS>[] MSDOSExecutableCheckClasses
-        {
-            get
-            {
-                msdosExecutableCheckClasses ??= InitCheckClasses<IExecutableCheck<MSDOS>>();
-                return msdosExecutableCheckClasses;
-            }
-        }
+        public static IExecutableCheck<MSDOS>[] MSDOSExecutableCheckClasses = [];
 
         /// <summary>
         /// Cache for all IExecutableCheck<NewExecutable> types
         /// </summary>
-        public static IExecutableCheck<NewExecutable>[] NewExecutableCheckClasses
-        {
-            get
-            {
-                newExecutableCheckClasses ??= InitCheckClasses<IExecutableCheck<NewExecutable>>();
-                return newExecutableCheckClasses;
-            }
-        }
+        public static IExecutableCheck<NewExecutable>[] NewExecutableCheckClasses = [];
 
         /// <summary>
         /// Cache for all IPathCheck types
         /// </summary>
-        public static IPathCheck[] PathCheckClasses
-        {
-            get
-            {
-                pathCheckClasses ??= InitCheckClasses<IPathCheck>();
-                return pathCheckClasses;
-            }
-        }
+        public static IPathCheck[] PathCheckClasses = [];
 
         /// <summary>
         /// Cache for all IExecutableCheck<PortableExecutable> types
         /// </summary>
-        public static IExecutableCheck<PortableExecutable>[] PortableExecutableCheckClasses
-        {
-            get
-            {
-                portableExecutableCheckClasses ??= InitCheckClasses<IExecutableCheck<PortableExecutable>>();
-                return portableExecutableCheckClasses;
-            }
-        }
+        public static IExecutableCheck<PortableExecutable>[] PortableExecutableCheckClasses = [];
 
         #endregion
 
         #region Internal Instances
-
-        /// <summary>
-        /// Cache for all IContentCheck types
-        /// </summary>
-        private static IContentCheck[]? contentCheckClasses;
-
-        /// <summary>
-        /// Cache for all IISOCheck<ISO9660> types
-        /// </summary>
-        private static IDiskImageCheck<ISO9660>[]? iso9660CheckClasses;
-
-        /// <summary>
-        /// Cache for all IExecutableCheck<LinearExecutable> types
-        /// </summary>
-        private static IExecutableCheck<LinearExecutable>[]? linearExecutableCheckClasses;
-
-        /// <summary>
-        /// Cache for all IExecutableCheck<MSDOS> types
-        /// </summary>
-        private static IExecutableCheck<MSDOS>[]? msdosExecutableCheckClasses;
-
-        /// <summary>
-        /// Cache for all IExecutableCheck<NewExecutable> types
-        /// </summary>
-        private static IExecutableCheck<NewExecutable>[]? newExecutableCheckClasses;
-
-        /// <summary>
-        /// Cache for all IPathCheck types
-        /// </summary>
-        private static IPathCheck[]? pathCheckClasses;
-
-        /// <summary>
-        /// Cache for all IExecutableCheck<PortableExecutable> types
-        /// </summary>
-        private static IExecutableCheck<PortableExecutable>[]? portableExecutableCheckClasses;
 
         #endregion
 

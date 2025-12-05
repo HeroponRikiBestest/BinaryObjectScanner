@@ -20,6 +20,10 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ProtectionScan", "Protectio
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BinaryObjectScanner.Test", "BinaryObjectScanner.Test\BinaryObjectScanner.Test.csproj", "{227A8E39-0230-47CE-8F1D-42368129357D}"
 EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "SabreTools.Serialization", "SabreTools.Serialization", "{8972A396-5775-437C-9E20-6D68B4607CC2}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SabreTools.Serialization", "SabreTools.Serialization\SabreTools.Serialization\SabreTools.Serialization.csproj", "{620F2901-2414-40C7-891B-A87D9939D0D0}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -38,11 +42,18 @@ Global
 		{227A8E39-0230-47CE-8F1D-42368129357D}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{227A8E39-0230-47CE-8F1D-42368129357D}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{227A8E39-0230-47CE-8F1D-42368129357D}.Release|Any CPU.Build.0 = Release|Any CPU
+		{620F2901-2414-40C7-891B-A87D9939D0D0}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{620F2901-2414-40C7-891B-A87D9939D0D0}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{620F2901-2414-40C7-891B-A87D9939D0D0}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{620F2901-2414-40C7-891B-A87D9939D0D0}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {0B343DD2-8852-47B0-9647-DFCFBEDF933C}
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{620F2901-2414-40C7-891B-A87D9939D0D0} = {8972A396-5775-437C-9E20-6D68B4607CC2}
 	EndGlobalSection
 EndGlobal
