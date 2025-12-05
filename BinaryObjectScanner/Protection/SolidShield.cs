@@ -21,6 +21,9 @@ namespace BinaryObjectScanner.Protection
 
             if (name.OptionalStartsWith("DVM Library", StringComparison.OrdinalIgnoreCase))
                 return $"SolidShield {exe.GetInternalVersion()}";
+            
+            if (name.OptionalStartsWith("TDVM Library", StringComparison.OrdinalIgnoreCase))
+                return $"SolidShield {exe.GetInternalVersion()}";
 
             else if (name.OptionalStartsWith("Solidshield Activation Library", StringComparison.OrdinalIgnoreCase))
                 return $"SolidShield Core.dll {exe.GetInternalVersion()}";
