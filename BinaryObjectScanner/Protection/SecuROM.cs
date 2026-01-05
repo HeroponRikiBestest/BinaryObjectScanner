@@ -584,7 +584,13 @@ namespace BinaryObjectScanner.Protection
         /// <summary>
         /// Matches modulo of PA-capable executables to known ones from 80_PA
         /// </summary>
-        /// <remarks>Whenever this is updated, remove google chrome, it shouldn't be there.</remarks>
+        /// <remarks>Whenever 80_PA is imported, there are a few known mistakes that must be corrected
+        /// Remove Google Chrome, it shouldn't be there and is most likely a reference to the author's other major project.
+        /// "Nintendo Tiger Woods PGA Tour 08" should just be "Tiger Woods PGA Tour 08"
+        /// "Final Fantasy VII Remake" should just be "Final Fantasy VII", although technically this must be confirmed.
+        /// A few entries such as one of the GTA4 ones have too many leading zeroes.
+        /// Some entries, most notably the Company of Heroes validators and Sam & Max (DVD), must be consolidated
+        /// </remarks>
         /// When adding: convert all modulo to lowercase, this is how they're stored in the executable.
         // TODO: Verify no encoding issues
         private static readonly Dictionary<string, string> In80 = new()
@@ -1145,7 +1151,7 @@ namespace BinaryObjectScanner.Protection
             {"b389f7713e62bbc711db71ef15ea1", "Final Cut: Fame Fatale"},
             {"b477b8c785211b69c5b13021bf073", "Final Cut: The True Escapade"},
             {"6292738d294c705e7cf4f8c03ad33d", "Final Fantasy VII (Store Edition)"},
-            {"1c7283bbd1982f282a7f01aa9c8105", "Final Fantasy VII Remake"},
+            {"1c7283bbd1982f282a7f01aa9c8105", "Final Fantasy VII"}, // Erroneously called "Final Fantasy VII Remake"
             {"70d8c43d42c8703c972383f8dfd463", "Final Fantasy VIII (Store Edition)"},
             {"6e2d561590075f17b467d03a6e2363", "Finders"},
             {"b3aecbc3e29a7e82445dd37cce6cf", "Fish Tycoon"},
