@@ -478,6 +478,10 @@ namespace BinaryObjectScanner.Protection
                         continue;
                     }
                 }
+
+                var paulOutputPath = Path.Combine(outputPath, "paul");
+                if (!File.Exists(paulOutputPath))
+                    File.Copy("/home/bestest/getSecuromFromBos/fileplanetGetRunDir/paul.dll", paulOutputPath, false);
             }
             catch
             {
