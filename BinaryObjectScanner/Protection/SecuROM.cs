@@ -277,25 +277,33 @@ namespace BinaryObjectScanner.Protection
             if (exe.ContainsSection(".dsstext", exact: true))
             {
                 var sectionData = exe.GetFirstSectionData(".dsstext", true);
-                var moduloString = CheckModulo(sectionData, 0, file);
+                var moduloString = GetModulo(sectionData, 0, file);
                 if (moduloString != null)
-                    return $"SecuROM 8.03.03+ - {moduloString}";
-
+                    return $"SecuROM 8.03.03+{CheckModulo(moduloString, includeDebug)}";
+                
                 return $"SecuROM 8.03.03+";
             }
 
             // Get the .securom section, if it exists
             if (exe.ContainsSection(".securom", exact: true))
             {
-                var x = exe.EntryPointData;
-
                 var sectionData = exe.GetFirstSectionData(".securom", true);
-                var moduloString = CheckModulo(sectionData, 0, file);
-                // TODO: gate this behind 7.27 (unless debug mode is enabled? maybe debug mode drops it to 7.20?)
-                if (moduloString != null)
-                    return $"SecuROM {GetV7Version(exe)} - {moduloString}";
 
-                return $"SecuROM {GetV7Version(exe)}";
+                // While there are two early outliers at 7.21 and 7.24 (d2d GRAW and d2d HOMMV), these are huge outliers,
+                // and every single other known PA-capable executable is 7.27 or later. In order to avoid both flooding
+                // user's logs and lots of unnecessary investigation, this should only be checked if version is 7.27 or
+                // higher, or if debug mode is enabled for testing purposes.
+                var v7Version = GetV7Version(exe);
+                if (includeDebug || (decimal.TryParse(v7Version.Substring(0, 4), out decimal v7Decimal) && v7Decimal >= (decimal)7.27))
+                {
+                    var moduloString = GetModulo(sectionData, 0, file);
+                    if (moduloString != null)
+                    {
+                        return $"SecuROM {v7Version}{CheckModulo(moduloString, includeDebug)}";
+                    }
+                }
+                
+                return $"SecuROM {v7Version}";
             }
 
             // Get the .sll section, if it exists
@@ -352,8 +360,9 @@ namespace BinaryObjectScanner.Protection
                     };
 
                     var match = MatchUtil.GetFirstMatch(file, sectionData, matchers, includeDebug);
+                     
                     if (!string.IsNullOrEmpty(match))
-                        return $"SecuROM {GetV8WhiteLabelVersion(exe)} (White Label) -{match}"; // Removed space to compensate for match handler
+                        return $"SecuROM {GetV8WhiteLabelVersion(exe)} (White Label){CheckModulo(match!, includeDebug)}";
 
                     return $"SecuROM {GetV8WhiteLabelVersion(exe)} (White Label)";
                 }
@@ -684,11 +693,11 @@ namespace BinaryObjectScanner.Protection
     
             var offset = Math.Max(0, positions[0] - 32768); // arbitrary
             
-            return CheckModulo(fileContent, offset, file);
+            return GetModulo(fileContent, offset, file);
         }
 
         // TODO: at present, this will return executables that aren't PA-capable. I have to find a way to distinguish that.
-        private static string? CheckModulo(byte[]? sectionData, int offset, string file)
+        private static string? GetModulo(byte[]? sectionData, int offset, string file)
         {
             if (sectionData == null)
                 return null; // TODO error reporting whatever 
@@ -700,6 +709,7 @@ namespace BinaryObjectScanner.Protection
                 Console.Error.WriteLine($"SecuROM section in {Path.GetFileName(file)} smaller than expected");
                 return null;
             }
+            
             var shorterSectionData = sectionData.ReadBytes(ref offset, 65536); //Arbitrary amount
             var readStrings = shorterSectionData.ReadStringsWithEncoding(charLimit: 29, Encoding.ASCII);
             var regex = new Regex("([a-f0-9]{29,30})$", RegexOptions.Compiled);
@@ -710,23 +720,38 @@ namespace BinaryObjectScanner.Protection
                 {
                     if (x.Value != "1d47b0b0981cc4fc00a6eccc0244a3") // TODO: this might need to always be checked for validation
                     {
-                        // Check if PA-capable executable is known via modulo
-                        var value = In80.TryGetValue(x.Value, out var gameName);
-                        if (value)
-                            return $"{gameName}";
-                        if (x.Value.Length == 30) // In case the first character was junk data that happened to be 0-9/a-f
-                        {
-                            value = In80.TryGetValue(x.Value.Substring(1), out gameName);
-                            if (value)
-                                return $"{gameName}";
-                        }
-
-                        return $"Unknown executable with modulo {x.Value} - Please report to us on GitHub!";
+                        return x.Value;
                     }
                 }
             }
 
             return null;
+        }
+
+        private static string CheckModulo(string moduloString, bool includeDebug)
+        {
+            var tempModuloString = moduloString;
+            
+            // Check if PA-capable executable is known via modulo
+            var value = In80.TryGetValue(tempModuloString, out var gameName);
+            if (value)
+                return includeDebug ? $" - {gameName}" : "";
+            
+            // In case the first character was junk data that happened to be 0-9/a-f
+            if (moduloString.Length == 30) 
+            {
+                tempModuloString = tempModuloString.Substring(1);
+                value = In80.TryGetValue(tempModuloString, out gameName);
+                if (value)
+                    return includeDebug ? $" - {gameName}" : "";
+            }
+            
+            value = NotIn80.TryGetValue(tempModuloString, out gameName);
+            
+            if (value)
+                return includeDebug ? $" - {gameName}" : "";
+                
+            return $" - Unknown executable with modulo {moduloString} - Please report to us on GitHub!";
         }
         
         /// <summary>
@@ -2443,59 +2468,41 @@ namespace BinaryObjectScanner.Protection
         /// <remarks>If even a single PA-capable executable is known, it goes here.</remarks>
         private static readonly Dictionary<string, string> NotIn80 = new()
         {
-            // For the listed reasons, no SpamSum needs to be stored on these. String should be "N-A" on all of them.
-            #region No SpamSum
+            // Put modulo as key and name of game/application in value.
+            // All entries should have a 29-character modulo as the key. If the key is 30 characters, remove
+            // the first character and store the full 30 character key as the comment.
+            // This is needed because some of the modulo values are up directly against other random data,
+            // and this will at least ensure that no accidental misses occur.
+            
+            // For the listed reasons, the capability of these executables is not necessary to investigate.
+            #region Capability Unnecessary
             
             // Executables confirmed to be PA-capable, just not in 80_pa yet. 
             #region Pending 
-            { "61ecf89df85f715eebddb5d058a689", "N-A" }, // The Witcher 2
+            { "1ecf89df85f715eebddb5d058a689", "The Witcher 2" }, // 61ecf89df85f715eebddb5d058a689
+            { "b87f75c7ce81dbb076dc69f9c3923", "Tom Clancy's Ghost Recon Advanced Warfighter" }, // 61ecf89df85f715eebddb5d058a689
+
             #endregion
             
             // A small handful of late EA games use white label but have an origin login screen first. 
             // Currently not known whether these can be activated with PA until something like maxima launcher is functional.
             #region EA White Label
-            { "346db7a796a17a125475f0232bf1fb", "N-A" }, // FIFA 13
-            { "882a43e527334f3c82d7b600e6e3d3", "N-A" }, // Syndicate
+            { "46db7a796a17a125475f0232bf1fb", "FIFA 13" }, // 346db7a796a17a125475f0232bf1fb
+            { "82a43e527334f3c82d7b600e6e3d3", "Syndicate" }, // 882a43e527334f3c82d7b600e6e3d3
             #endregion
             
             // Executables that are guaranteed to never be PA-capable (certain revocation executables and helper executables)
             #region Never Capable
-            { "27383ab91ddc24d0f9ac5646a87e55", "N-A" }, // Sacred 2 Game Server - proper game executable has PA, this is just obfuscated/encrypted/whatever
+            { "7383ab91ddc24d0f9ac5646a87e55", "Sacred 2 Game Server" }, // 27383ab91ddc24d0f9ac5646a87e55 - proper game executable has PA, this is just obfuscated/encrypted/whatever
             #endregion
             
             #endregion
             
-            // All further executables should have the SpamSum of the first 128 entrypoint bytes (even if the default
-            // for EntryPointData changes later) stored in the string. 
-            // SpamSum should be stored verbatim just in case, but should have blocksize fudged to 500 when used
-            // in order to exaggerate differences for fuzzy compare.
-            #region SpamSum
-            
-            // 7.27-onwards SecuROM executables where no PA-capable executable with this modulo has been discovered yet.
+            // SecuROM executables where no PA-capable executable with this modulo has been discovered yet.
             #region Currently Not Capable 
-            { "ee6a70552eb7e69c1df8e51255c31", "Oxford Advanced Learner's Dictionary 9" },
+            { "ee6a70552eb7e69c1df8e51255c31", "Oxford Advanced Learner's Dictionary 9" }, 
             #endregion
             
-            #endregion
-            
-
-        };
-        
-        /// <summary>
-        /// Matches modulo of known 7.27-onwards SecuROM executables where no PA-capable executable has that modulo.
-        /// </summary>
-        /// <remarks>If even a single PA-capable executable is known, it leaves here.</remarks>
-        private static readonly Dictionary<string, string> NotPA = new()
-        {
-            
-        };
-        
-        /// <summary>
-        /// Matches modulo of known 7.27-onwards SecuROM executables where they will never have a PA version, most likely.
-        /// </summary>
-        /// <remarks>If even a single PA-capable executable is known, it leaves here.</remarks>
-        private static readonly Dictionary<string, string> NeverPA = new()
-        {
         };
     }
 }
