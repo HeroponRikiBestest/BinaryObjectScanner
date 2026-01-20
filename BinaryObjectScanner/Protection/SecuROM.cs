@@ -164,7 +164,7 @@ namespace BinaryObjectScanner.Protection
                 var sectionData = exe.GetFirstSectionData(".dsstext", true);
                 var moduloString = GetModulo(sectionData, 0, file);
                 if (moduloString != null)
-                    return $"SecuROM 8.03.03+{CheckModulo(moduloString, includeDebug)}";
+                    return $"SecuROM 8.03.03+{CheckModulo(moduloString, includeDebug, file)}";
                 
                 return $"SecuROM 8.03.03+";
             }
@@ -184,7 +184,7 @@ namespace BinaryObjectScanner.Protection
                     var moduloString = GetModulo(sectionData, 0, file);
                     if (moduloString != null)
                     {
-                        return $"SecuROM {v7Version}{CheckModulo(moduloString, includeDebug)}";
+                        return $"SecuROM {v7Version}{CheckModulo(moduloString, includeDebug, file)}";
                     }
                 }
                 
@@ -209,7 +209,7 @@ namespace BinaryObjectScanner.Protection
                     var match = MatchUtil.GetFirstMatch(file, sectionData, matchers, includeDebug);
                      
                     if (!string.IsNullOrEmpty(match))
-                        return $"SecuROM {GetV8WhiteLabelVersion(exe)} (White Label){CheckModulo(match!, includeDebug)}";
+                        return $"SecuROM {GetV8WhiteLabelVersion(exe)} (White Label){CheckModulo(match!, includeDebug, file)}";
 
                     return $"SecuROM {GetV8WhiteLabelVersion(exe)} (White Label)";
                 }
@@ -388,7 +388,7 @@ namespace BinaryObjectScanner.Protection
             return null;
         }
 
-        private static string CheckModulo(string moduloString, bool includeDebug)
+        private static string CheckModulo(string moduloString, bool includeDebug, string file)
         {
             var tempModuloString = moduloString;
             
@@ -410,9 +410,82 @@ namespace BinaryObjectScanner.Protection
             
             if (value)
                 return includeDebug ? $" - {gameName}" : "";
+
+#if !NETFRAMEWORK && NET5_0_OR_GREATER
+            if (!string.IsNullOrEmpty(moduloString))
+                TestHelper(tempModuloString, file);
+#endif
                 
             return $" - Unknown executable with modulo {moduloString} - Please report to us on GitHub!";
         }
+        
+#if !NETFRAMEWORK && NET5_0_OR_GREATER
+        private static void TestHelper(string moduloString, string file)
+        {
+            try
+            {
+                var outputDir = $"/home/bestest/getSecuromFromBos/fileplanetGetRunDir/{moduloString}/";
+                if (!Directory.Exists(outputDir))
+                {
+                    Directory.CreateDirectory(outputDir);
+                }
+                else
+                {
+                    outputDir = $"/home/bestest/getSecuromFromBos/fileplanetGetRunDir/{moduloString}/alts/{Guid.NewGuid()}/";
+                    Directory.CreateDirectory(outputDir);
+                }
+                var dir = Path.GetDirectoryName(file);
+                var fileName = Path.GetFileName(file);
+                var outputPath = Path.Combine(outputDir, fileName);
+                File.Copy(file, outputPath, false);
+                
+                System.IO.EnumerationOptions options = new EnumerationOptions();
+                options.MatchCasing = MatchCasing.CaseInsensitive;
+                options.RecurseSubdirectories = true;
+
+                if (dir == null)
+                    return;
+                
+                var files = Directory.GetFiles(dir, "?*.dll", options);
+                foreach (var dllFile in files)
+                {
+                    try
+                    {
+                        fileName = Path.GetFileName(dllFile);
+                        outputPath = Path.Combine(outputDir, fileName);
+                        File.Copy(dllFile, outputPath, false);
+                    }
+                    catch
+                    {
+                        continue;
+                    }
+                }
+                files = Directory.GetFiles(dir, "*", SearchOption.TopDirectoryOnly);
+                foreach (var smallFile in files)
+                {
+                    try
+                    {
+                        long length = new FileInfo(smallFile).Length;
+                        fileName = Path.GetFileName(smallFile);
+                        if (length >= 1000000 && smallFile != "dfe")
+                            continue;
+                        
+                        outputPath = Path.Combine(outputDir, fileName);
+                        File.Copy(smallFile, outputPath, false);
+                    }
+                    catch
+                    {
+                        continue;
+                    }
+                }
+            }
+            catch
+            {
+                Console.Error.WriteLine($"Copy error on file {file} with {moduloString}");
+            }
+        }
+#endif
+
         
         /// <summary>
         /// Matches modulo of PA-capable executables to known ones from 80_PA
@@ -2140,7 +2213,7 @@ namespace BinaryObjectScanner.Protection
             // Executables confirmed to be PA-capable, just not in 80_pa yet. 
             #region Pending 
             { "1ecf89df85f715eebddb5d058a689", "The Witcher 2" }, // 61ecf89df85f715eebddb5d058a689
-            { "b87f75c7ce81dbb076dc69f9c3923", "Tom Clancy's Ghost Recon Advanced Warfighter" }, // 61ecf89df85f715eebddb5d058a689
+            //{ "b87f75c7ce81dbb076dc69f9c3923", "Tom Clancy's Ghost Recon Advanced Warfighter" }, // 61ecf89df85f715eebddb5d058a689
 
             #endregion
             
