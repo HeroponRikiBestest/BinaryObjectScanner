@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Threading;
 
 #if NETCOREAPP
@@ -281,14 +282,12 @@ namespace ProtectionScan.Features
                 if (Nested)
                 {
                     // A nested dictionary is used to achieve proper serialization.
-                    Dictionary<string, object> nestedDictionary = [];
+                    Dictionary<string, TestThis> nestedDictionary = [];
                     path = path.TrimEnd(['\\', '/']);
 
                     // Sort the keys for consistent output
                     string[] keys = [.. protections.Keys];
                     Array.Sort(keys);
-
-                    var modifyNodeList = new List<(Dictionary<string, object>, string, string[])>();
 
                     // Loop over all keys
                     foreach (string key in keys)
@@ -303,19 +302,7 @@ namespace ProtectionScan.Features
                         Array.Sort(fileProtections);
 
                         // Inserts key and protections into nested dictionary, with the key trimmed of the base path.
-                        InsertNode(nestedDictionary, key, path, fileProtections, modifyNodeList);
-                    }
-
-                    // Adds the non-leaf-node protections back in
-                    for (int i = 0; i < modifyNodeList.Count; i++)
-                    {
-                        List<object> modifyNode =
-                        [
-                            modifyNodeList[i].Item3,
-                            modifyNodeList[i].Item1[modifyNodeList[i].Item2],
-                        ];
-
-                        modifyNodeList[i].Item1[modifyNodeList[i].Item2] = modifyNode;
+                        InsertNode(nestedDictionary, key, path, fileProtections.ToList());
                     }
 
                     // Create the output data
@@ -340,6 +327,16 @@ namespace ProtectionScan.Features
             }
         }
 
+        public union TestThis(string, Dictionary<string, TestThis>, List<TestThis>)
+        {
+            public bool IsList => this switch
+            {
+                string => false,
+                Dictionary<string, TestThis> => false,
+                List<TestThis> => true
+            };
+    }
+
         /// <summary>
         /// Inserts file protection dictionary entries into a nested dictionary based on path
         /// </summary>
@@ -347,12 +344,10 @@ namespace ProtectionScan.Features
         /// <param name="key">The key for the given protection entry</param>
         /// <param name="path">Original base path used for scanning</param>
         /// <param name="protections">Set of protections found, if any</param>
-        /// <param name="modifyNodeList">Set representing overlapping nodes to be processed after</param>
-        private static void InsertNode(Dictionary<string, object> dict,
+        private static void InsertNode(Dictionary<string, TestThis> dict,
             string key,
             string path,
-            string[] protections,
-            List<(Dictionary<string, object>, string, string[])> modifyNodeList)
+            List<string> protections)
         {
             // Remove the base path from the key for processing
             key = key[path.Length..];
@@ -361,16 +356,16 @@ namespace ProtectionScan.Features
             var pathParts = key.Split(Path.DirectorySeparatorChar, StringSplitOptions.RemoveEmptyEntries);
             if (pathParts.Length == 0)
             {
-                modifyNodeList.Add((dict, path, protections));
-                dict[path] = new Dictionary<string, object>();
+                // TODO: modifyNodeList.Add((dict, path, protections));
+                dict[path] = new Dictionary<string, TestThis>();
                 return;
             }
 
             // Create the node if it doesn't already exist
             if (!dict.ContainsKey(path))
-                dict[path] = new Dictionary<string, object>();
+                dict[path] = new Dictionary<string, TestThis>();
 
-            var current = (Dictionary<string, object>)dict[path];
+            var current = (Dictionary<string, TestThis>)dict[path].Value!;
 
             // Traverses the nested dictionary until the "leaf" dictionary is reached.
             for (int i = 0; i < pathParts.Length - 1; i++)
@@ -378,34 +373,39 @@ namespace ProtectionScan.Features
                 var part = pathParts[i];
 
                 // Inserts new subdictionaries if one doesn't already exist
-                if (!current.TryGetValue(part, out object? innerObject))
+                if (!current.ContainsKey(part)) //!current.TryGetValue(part, out object? innerObject)
                 {
-                    var innerDictionary = new Dictionary<string, object>();
-                    innerObject = innerDictionary;
-                    current[part] = innerObject;
-                    current = innerDictionary;
-                    continue;
+                    current[part] = new Dictionary<string, TestThis>();
                 }
-
-                if (innerObject is string[] existingProtections)
+                else if (current[part].IsList) //innerObject is string[] existingProtections
                 {
-                    modifyNodeList.Add((current, part, existingProtections));
-                    innerObject = new Dictionary<string, object>();
+                    var list = (List<TestThis>)current[part].Value!;
+                    current = new Dictionary<string, TestThis>();
+                    list.Add(current);
                 }
-
-                current[part] = innerObject;
-                current = (Dictionary<string, object>)current[part];
+                // Should be dictionary
+                current = (Dictionary<string, TestThis>)current[part].Value!;
             }
 
             // If the "leaf" dictionary has been reached, add the file and its protections.
-            if (current.ContainsKey(pathParts[^1]) && current[pathParts[^1]] is string[] existing)
+            if (current.ContainsKey(pathParts[^1]) && current[pathParts[^1]].IsList)
             {
-                string[] combined = [.. existing, .. protections];
-                current[pathParts[^1]] = combined;
+                var list = (List<TestThis>)current[pathParts[^1]].Value!;
+                //list.AddRange(protections.Cast<TestThis>()); // why doesnt this work
+                foreach (var s in protections)
+                {
+                    list.Add(s);
+                }
             }
             else
             {
-                current.Add(pathParts[^1], protections);
+                var list = new List<TestThis>();
+                foreach (var s in protections)
+                {
+                    list.Add(s);
+                }
+
+                current[pathParts[^1]] = list;
             }
         }
 #endif
